@@ -1,9 +1,29 @@
 <script setup>
-import { ref, computed } from "vue";
-import projects from "../data/projects.json";
+import { ref, computed, onMounted } from "vue";
 
 const openAccordion = ref(null);
 const showOnlyFeatured = ref(true);
+const projects = ref([]); // Cambia a un ref para manejar datos dinámicos
+
+// Función para cargar proyectos desde la API
+async function loadProjects() {
+    try {
+        const response = await fetch(
+            "https://krubshowroom-production.up.railway.app/api/projects"
+        );
+        if (!response.ok) {
+            throw new Error("Error al cargar los proyectos");
+        }
+        projects.value = await response.json();
+    } catch (error) {
+        console.error("Error:", error);
+    }
+}
+
+// Llama a la función al montar el componente
+onMounted(() => {
+    loadProjects();
+});
 
 function toggleAccordion(index) {
 	openAccordion.value = openAccordion.value === index ? null : index;
@@ -16,8 +36,8 @@ function toggleFeatured() {
 
 const filteredProjects = computed(() => {
 	return showOnlyFeatured.value
-		? projects.filter((p) => p.featured === true)
-		: projects;
+		? projects.value.filter((p) => p.featured === true)
+		: projects.value;
 });
 </script>
 

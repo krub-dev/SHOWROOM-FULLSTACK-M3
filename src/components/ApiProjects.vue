@@ -369,6 +369,7 @@ export default {
 						.split(",")
 						.map((tech) => tech.trim()),
 					rating: parseInt(this.formData.rating),
+					featured: this.formData.featured || false, 
 				};
 
 				let response;
