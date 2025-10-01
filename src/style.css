@@ -1,0 +1,51 @@
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+:root {
+  --color-bg: #1e1e1e;
+  --color-text: #dbdbdb;
+  --color-primary: #1d1d1d;
+  --color-secondary: #fab811;
+  --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+  margin: 0 auto;
+  font-family: var(--font-family);
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  text-align: center;
+}
+
+.banner {
+  text-align: center;
+}
+
+.logo {
+  width: 100px;
+  margin-top: -5em;
+  position: relative;
+  left: 0%;
+  
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+h1 {
+  font-size: 3em;
+  margin: 0.2em 0;
+}
+
+h2 {
+  font-size: 2em;
+  margin: 0.2em 0 1em 0;
+  color: var(--color-secondary);
+}
