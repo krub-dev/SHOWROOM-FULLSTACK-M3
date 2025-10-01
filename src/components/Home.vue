@@ -2,8 +2,8 @@
 	<div class="home-container">
 		<div class="banner">
 			<img
-				src="/src/assets/banner-krub.png"
-				alt="banner krub"
+				src="/src/assets/banner-showroom.png"
+				alt="banner showroom"
 				width="600"
 				height="auto"
 			/>
