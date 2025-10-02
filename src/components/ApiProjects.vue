@@ -18,6 +18,12 @@
 				</div>
 			</header>
 
+			<!-- Dev tool: quick health check -->
+			<div class="api-tools" style="display:flex; gap: 8px; margin: 0 0 12px; align-items:center; justify-content:center;">
+				<button @click="checkHealth" class="auth-btn">Probar conexión</button>
+				<span v-if="healthStatus" style="font-size:0.9em; color:#ccc;">{{ healthStatus }}</span>
+			</div>
+
 			<!-- Teacher Authentication Panel -->
 			<div v-if="!teacherAuthenticated" class="teacher-auth-panel">
 				<h3>Teacher Access Required</h3>
@@ -289,12 +295,13 @@ export default {
 			// Teacher authentication
 			teacherAuthenticated: false,
 			teacherPassword: "",
+			healthStatus: "",
 		};
 	},
 	computed: {
 		apiUrl() {
-			// Forzar siempre la URL de producción
-			return "https://krubshowroom-production.up.railway.app/api/projects";
+			// Use relative API path so it works in dev (via Vite proxy) and prod (same origin)
+			return '/api/projects';
 		},
 	},
 	async mounted() {
@@ -303,6 +310,18 @@ export default {
 	},
 
 	methods: {
+		async checkHealth() {
+			this.healthStatus = "";
+			try {
+				const res = await fetch('/api/health');
+				if (!res.ok) throw new Error('Health check failed');
+				const data = await res.json();
+				this.healthStatus = data?.status === 'ok' ? `OK - DB: ${data.database}` : 'ERROR';
+			} catch (e) {
+				this.healthStatus = 'ERROR de conexión';
+				console.error(e);
+			}
+		},
 		// Jarko authentication
 		async authenticateTeacher() {
 			if (!this.teacherPassword) {

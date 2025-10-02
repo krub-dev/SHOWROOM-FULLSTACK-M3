@@ -122,26 +122,26 @@ const projects = [
 ];
 
 async function main() {
-	console.log("🌱 Starting seed...");
+	console.log("Starting seed...");
 
 	// Clear existing data
 	await prisma.project.deleteMany();
-	console.log("🗑️  Cleared existing projects");
+	console.log("Cleared existing projects");
 
 	// Insert projects
 	for (const project of projects) {
 		await prisma.project.create({
 			data: project,
 		});
-		console.log(`✅ Created project: ${project.title}`);
+		console.log(`Created project: ${project.title}`);
 	}
 
-	console.log("🎉 Seed completed successfully!");
+	console.log("Seed completed successfully!");
 }
 
 main()
 	.catch((e) => {
-		console.error("❌ Seed failed:", e);
+		console.error("Seed failed:", e);
 		process.exit(1);
 	})
 	.finally(async () => {

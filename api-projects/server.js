@@ -1,9 +1,10 @@
 const express = require("express");
 const cors = require("cors"); // Permite comunicación entre puertos diferentes
-const fs = require("fs"); // File System - leer/escribir archivos (nativo Node.js)
 const path = require("path"); // Manejo de rutas multiplataforma (nativo Node.js)
+const { PrismaClient } = require("@prisma/client"); // Prisma ORM client
 
 const app = express();
+const prisma = new PrismaClient(); // Initialize Prisma Client
 const PORT = process.env.PORT || 3001; // Railway usa variable de entorno PORT
 
 // CORS configuration for development and production
@@ -45,96 +46,133 @@ if (process.env.NODE_ENV === "production") {
 	app.use(express.static(path.join(__dirname, "../dist")));
 }
 
-// Path al archivo JSON (como H2 database)
-// __dirname = carpeta actual (/api-projects/)
-// '../src/data/projects.json' = subir una carpeta, luego src/data/projects.json
-const projectsFile = path.join(__dirname, "../src/data/projects.json");
-
-// Leer proyectos del archivo (como findAll() en Spring Data)
-function readProjects() {
-	try {
-		// fs.readFileSync - lee archivo completo de forma síncrona
-		// 'utf8' - codificación de texto para caracteres especiales (ñ, á, etc.)
-		const data = fs.readFileSync(projectsFile, "utf8");
-		return JSON.parse(data); // Convierte string JSON a objeto JavaScript
-	} catch (error) {
-		console.error("Error reading projects:", error);
-		return []; // Retorna array vacío si hay error
-	}
-}
-
-// Escribir proyectos al archivo (como save() en Spring Data)
-function writeProjects(projects) {
-	try {
-		// JSON.stringify(projects, null, 2) - convierte a JSON con formato bonito (indentado)
-		fs.writeFileSync(projectsFile, JSON.stringify(projects, null, 2));
-		return true;
-	} catch (error) {
-		console.error("Error writing projects:", error);
-		return false;
-	}
-}
-
 // ENDPOINTS (como @GetMapping, @PostMapping...)
 
-// GET /api/projects - Leer todos (como @GetMapping)
-app.get("/api/projects", (req, res) => {
-	const projects = readProjects();
-	res.json(projects);
+// GET /api/health - Health check endpoint
+app.get("/api/health", async (req, res) => {
+	try {
+		// Test database connection with a simple query
+		await prisma.$queryRaw`SELECT 1`;
+		res.json({
+			status: "ok",
+			database: "connected",
+			timestamp: new Date().toISOString(),
+			message: "API and Database are healthy",
+		});
+	} catch (error) {
+		console.error("Health check failed:", error);
+		res.status(503).json({
+			status: "error",
+			database: "disconnected",
+			timestamp: new Date().toISOString(),
+			message: "Database connection failed",
+			error: error.message,
+		});
+	}
 });
 
-// POST /api/projects - Crear nuevo (como @PostMapping)
-app.post("/api/projects", (req, res) => {
-	const projects = readProjects();
+// GET /api/projects - Leer todos (como @GetMapping con Prisma)
+app.get("/api/projects", async (req, res) => {
+	try {
+		const projects = await prisma.project.findMany({
+			orderBy: {
+				id: "asc", // Ordenar por ID ascendente
+			},
+		});
+		res.json(projects);
+	} catch (error) {
+		console.error("Error fetching projects:", error);
+		res.status(500).json({ error: "Failed to fetch projects" });
+	}
+});
 
-	// Generate next sequential ID
-	const maxId =
-		projects.length > 0 ? Math.max(...projects.map((p) => p.id || 0)) : 0;
-	const newProject = {
-		...req.body,
-		id: maxId + 1,
-	};
-	projects.push(newProject);
+// POST /api/projects - Crear nuevo (como @PostMapping con Prisma)
+app.post("/api/projects", async (req, res) => {
+	try {
+		// Validar que title sea obligatorio
+		if (!req.body.title) {
+			return res.status(400).json({ error: "Title is required" });
+		}
 
-	if (writeProjects(projects)) {
+		const newProject = await prisma.project.create({
+			data: {
+				title: req.body.title,
+				description: req.body.description || "",
+				image: req.body.image || null,
+				technologies: req.body.technologies || [],
+				rating: req.body.rating || 5,
+				repo: req.body.repo || null,
+				featured: req.body.featured || false,
+			},
+		});
+
 		res.status(201).json(newProject);
-	} else {
+	} catch (error) {
+		console.error("Error creating project:", error);
 		res.status(500).json({ error: "Failed to create project" });
 	}
 });
 
-// PUT /api/projects/:id - Actualizar (como @PutMapping)
-app.put("/api/projects/:id", (req, res) => {
-	const projects = readProjects();
-	const id = parseInt(req.params.id);
-	const index = projects.findIndex((p) => p.id === id);
+// PUT /api/projects/:id - Actualizar (como @PutMapping con Prisma)
+app.put("/api/projects/:id", async (req, res) => {
+	try {
+		const id = parseInt(req.params.id);
 
-	if (index === -1) {
-		return res.status(404).json({ error: "Project not found" });
-	}
+		// Validar que title sea obligatorio
+		if (!req.body.title) {
+			return res.status(400).json({ error: "Title is required" });
+		}
 
-	projects[index] = { ...req.body, id };
+		// Check if project exists
+		const existingProject = await prisma.project.findUnique({
+			where: { id },
+		});
 
-	if (writeProjects(projects)) {
-		res.json(projects[index]);
-	} else {
+		if (!existingProject) {
+			return res.status(404).json({ error: "Project not found" });
+		}
+
+		const updatedProject = await prisma.project.update({
+			where: { id },
+			data: {
+				title: req.body.title,
+				description: req.body.description,
+				image: req.body.image,
+				technologies: req.body.technologies,
+				rating: req.body.rating,
+				repo: req.body.repo,
+				featured: req.body.featured,
+			},
+		});
+
+		res.json(updatedProject);
+	} catch (error) {
+		console.error("Error updating project:", error);
 		res.status(500).json({ error: "Failed to update project" });
 	}
 });
 
-// DELETE /api/projects/:id - Borrar (como @DeleteMapping)
-app.delete("/api/projects/:id", (req, res) => {
-	const projects = readProjects();
-	const id = parseInt(req.params.id);
-	const filteredProjects = projects.filter((p) => p.id !== id);
+// DELETE /api/projects/:id - Borrar (como @DeleteMapping con Prisma)
+app.delete("/api/projects/:id", async (req, res) => {
+	try {
+		const id = parseInt(req.params.id);
 
-	if (projects.length === filteredProjects.length) {
-		return res.status(404).json({ error: "Project not found" });
-	}
+		// Check if project exists
+		const existingProject = await prisma.project.findUnique({
+			where: { id },
+		});
 
-	if (writeProjects(filteredProjects)) {
+		if (!existingProject) {
+			return res.status(404).json({ error: "Project not found" });
+		}
+
+		await prisma.project.delete({
+			where: { id },
+		});
+
 		res.json({ message: "Project deleted successfully" });
-	} else {
+	} catch (error) {
+		console.error("Error deleting project:", error);
 		res.status(500).json({ error: "Failed to delete project" });
 	}
 });
@@ -166,9 +204,26 @@ if (process.env.NODE_ENV === "production") {
 	});
 }
 
+// Graceful shutdown - Close Prisma connection on server shutdown
+process.on("SIGINT", async () => {
+	console.log("\nClosing Prisma connection...");
+	await prisma.$disconnect();
+	console.log("Prisma disconnected");
+	process.exit(0);
+});
+
+process.on("SIGTERM", async () => {
+	console.log("\nClosing Prisma connection...");
+	await prisma.$disconnect();
+	console.log("Prisma disconnected");
+	process.exit(0);
+});
+
 app.listen(PORT, () => {
-	console.log(`🚀 API Server running on http://localhost:${PORT}`);
+	console.log(`API Server running on http://localhost:${PORT}`);
 	console.log(
-		`📡 API endpoints available at http://localhost:${PORT}/api/projects`
+		`API endpoints available at http://localhost:${PORT}/api/projects`
 	);
+	console.log(`Database: PostgreSQL with Prisma ORM`);
+	console.log(`Health check: http://localhost:${PORT}/api/health`);
 });

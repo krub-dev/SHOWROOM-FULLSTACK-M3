@@ -8,9 +8,7 @@ const projects = ref([]); // Cambia a un ref para manejar datos dinámicos
 // Función para cargar proyectos desde la API
 async function loadProjects() {
     try {
-        const response = await fetch(
-            "https://krubshowroom-production.up.railway.app/api/projects"
-        );
+		const response = await fetch('/api/projects');
         if (!response.ok) {
             throw new Error("Error al cargar los proyectos");
         }
