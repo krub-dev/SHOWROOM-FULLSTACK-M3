@@ -19,9 +19,24 @@
 			</header>
 
 			<!-- Dev tool: quick health check -->
-			<div class="api-tools" style="display:flex; gap: 8px; margin: 0 0 12px; align-items:center; justify-content:center;">
-				<button @click="checkHealth" class="auth-btn">Probar conexión</button>
-				<span v-if="healthStatus" style="font-size:0.9em; color:#ccc;">{{ healthStatus }}</span>
+			<div
+				class="api-tools"
+				style="
+					display: flex;
+					gap: 8px;
+					margin: 0 0 12px;
+					align-items: center;
+					justify-content: center;
+				"
+			>
+				<button @click="checkHealth" class="auth-btn">
+					Probar conexión
+				</button>
+				<span
+					v-if="healthStatus"
+					style="font-size: 0.9em; color: #ccc"
+					>{{ healthStatus }}</span
+				>
 			</div>
 
 			<!-- Teacher Authentication Panel -->
@@ -301,7 +316,7 @@ export default {
 	computed: {
 		apiUrl() {
 			// Use relative API path so it works in dev (via Vite proxy) and prod (same origin)
-			return '/api/projects';
+			return "/api/projects";
 		},
 	},
 	async mounted() {
@@ -313,19 +328,25 @@ export default {
 		async checkHealth() {
 			this.healthStatus = "";
 			try {
-				const res = await fetch('/api/health');
-				if (!res.ok) throw new Error('Health check failed');
+				const res = await fetch("/api/health");
+				if (!res.ok) throw new Error("Health check failed");
 				const data = await res.json();
-				this.healthStatus = data?.status === 'ok' ? `OK - DB: ${data.database}` : 'ERROR';
+				this.healthStatus =
+					data?.status === "ok"
+						? `OK - DB: ${data.database}`
+						: "ERROR";
 			} catch (e) {
-				this.healthStatus = 'ERROR de conexión';
+				this.healthStatus = "ERROR de conexión";
 				console.error(e);
 			}
 		},
 		// Jarko authentication
 		async authenticateTeacher() {
 			if (!this.teacherPassword) {
-				this.showMessage("Please enter custom Jarko access code", "error");
+				this.showMessage(
+					"Please enter custom Jarko access code",
+					"error"
+				);
 				return;
 			}
 			const CORRECT_PASSWORD = "ironhack2025";
@@ -388,7 +409,7 @@ export default {
 						.split(",")
 						.map((tech) => tech.trim()),
 					rating: parseInt(this.formData.rating),
-					featured: this.formData.featured || false, 
+					featured: this.formData.featured || false,
 				};
 
 				let response;

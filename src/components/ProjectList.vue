@@ -7,20 +7,20 @@ const projects = ref([]); // Cambia a un ref para manejar datos dinámicos
 
 // Función para cargar proyectos desde la API
 async function loadProjects() {
-    try {
-		const response = await fetch('/api/projects');
-        if (!response.ok) {
-            throw new Error("Error al cargar los proyectos");
-        }
-        projects.value = await response.json();
-    } catch (error) {
-        console.error("Error:", error);
-    }
+	try {
+		const response = await fetch("/api/projects");
+		if (!response.ok) {
+			throw new Error("Error al cargar los proyectos");
+		}
+		projects.value = await response.json();
+	} catch (error) {
+		console.error("Error:", error);
+	}
 }
 
 // Llama a la función al montar el componente
 onMounted(() => {
-    loadProjects();
+	loadProjects();
 });
 
 function toggleAccordion(index) {
@@ -173,13 +173,13 @@ const filteredProjects = computed(() => {
 
 .accordion-wrapper {
 	width: 90%;
-    margin: 0 auto;
-    border-radius: 12px;
-    background: rgba(30, 30, 30, 0.9);
-    border: 1px solid #333;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
-    transition: all 0.3s ease;
+	margin: 0 auto;
+	border-radius: 12px;
+	background: rgba(30, 30, 30, 0.9);
+	border: 1px solid #333;
+	box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+	overflow: hidden;
+	transition: all 0.3s ease;
 }
 
 .accordion-wrapper:hover {
