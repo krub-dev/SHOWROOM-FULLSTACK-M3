@@ -46,3 +46,16 @@ temp/
 api-projects/node_modules/
 api-projects/.env
 api-projects/package-lock.json
+
+# Database files
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# Prisma
+api-projects/prisma/migrations/
+api-projects/generated/
+
+# PostgreSQL
+*.sql
