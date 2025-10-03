@@ -4,10 +4,12 @@ Professional full-stack web application developed during **Ironhack Web Developm
 
 ## 🌐 **Live SHOWROOM**
 
-**🚀 Deployed Application:** [https://krubshowroom-production.up.railway.app](https://krubshowroom-production.up.railway.app)
+**🚀 Deployed Application:** [https://showroom-fullstack-m3-production.up.railway.app/](https://showroom-fullstack-m3-production.up.railway.app/)
 
 **Platform:** Railway Cloud Deployment  
-**Status:** ✅ Production Ready
+**Status:** ✅ Production Ready  
+**Backend API:** Railway PostgreSQL with Prisma ORM  
+**Database:** Managed PostgreSQL 14+ instance
 
 The showroom includes:
 
@@ -82,23 +84,28 @@ It features a full CRUD system, project search/filter by title and technologies,
 
 -   `App.vue` — Main application shell with responsive hamburger menu navigation.
 -   `Home.vue` — Landing page featuring a professional showroom and elegant design.
--   `ProjectList.vue` — Display all/featured projects with search and pagination.
--   `ApiProjects.vue` — CRUD manager linked to backend API.
+-   `ProjectList.vue` — Display all/featured projects (consumes /api/projects).
+-   `ApiProjects.vue` — CRUD manager with teacher authentication and health check button.
 -   `Contact.vue` — Dark theme contact form with LinkedIn integration.
 -   `NotFound404.vue` — Custom 404 error page.
 -   `LinkedInButton.vue` — Reusable LinkedIn networking component.
+-   `vite.config.js` — Dev server proxy: /api → http://localhost:3001 for seamless local development.
 
 ### Backend Structure
 
 -   `server.js` — Express server with full CRUD REST endpoints and SPA routing support.
 -   `prisma/schema.prisma` — Database schema with Project model definition.
--   `prisma/seed.js` — Database seeding script with sample projects.
+-   `prisma/seed.js` — Database seeding script with 10 sample projects.
 -   `prisma/migrations/` — Database migration history (auto-generated).
+-   `.env` — Local environment variables (DATABASE_URL, PORT, etc.)
+-   `.env.example` — Template for environment configuration.
 -   Data operations: Prisma ORM with PostgreSQL, full ACID compliance.
+-   Authentication: Teacher key middleware for write operations.
 -   CORS: Production-ready configuration.
 -   Static file serving and SPA fallback.
 -   Error handling and logging.
 -   Data validation with Prisma (required fields, types).
+-   Health check endpoint for monitoring.
 
 ## ⚡ **Quick Start**
 
@@ -122,21 +129,30 @@ cd api-projects
 npm install
 ```
 
-### **2. Database Setup:**
+### **2. Database Setup (Local PostgreSQL):**
 
-**Option A: Local PostgreSQL Installation**
+**Option A: Native PostgreSQL Installation (Recommended)**
 
 ```bash
 # Install PostgreSQL (Ubuntu/Debian)
 sudo apt update
 sudo apt install postgresql postgresql-contrib
 
-# Create database
-sudo -u postgres createdb showroom
-sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'ironhack2025';"
+# Start PostgreSQL service
+sudo systemctl start postgresql
+sudo systemctl enable postgresql
+
+# Create database and set password
+sudo -u postgres psql
+CREATE DATABASE showroom;
+ALTER USER postgres PASSWORD 'ironhack2025';
+\q
+
+# Verify connection
+psql -U postgres -d showroom -h localhost
 ```
 
-**Option B: Docker**
+**Option B: Docker (Alternative)**
 
 ```bash
 docker run --name showroom-postgres \
@@ -144,6 +160,9 @@ docker run --name showroom-postgres \
   -e POSTGRES_DB=showroom \
   -p 5432:5432 \
   -d postgres:16-alpine
+
+# Verify container is running
+docker ps
 ```
 
 ### **3. Configure Environment:**
@@ -164,14 +183,26 @@ cd api-projects
 # Generate Prisma Client
 npx prisma generate
 
-# Run migrations (creates tables)
-npx prisma migrate dev --name init
+# Apply migrations (creates Project table)
+npx prisma migrate deploy
 
-# Seed database with sample projects
+# Seed database with 10 sample projects
 npm run seed
 
-# Optional: Open Prisma Studio (GUI for database)
+# Optional: Open Prisma Studio (visual database GUI)
 npx prisma studio
+# → Opens at http://localhost:5555
+```
+
+**Expected output:**
+
+```
+Starting seed...
+Cleared existing projects
+Created project: Minishell
+Created project: sideForge Backend
+...
+Seed completed successfully!
 ```
 
 ### **5. Start Development Servers:**
@@ -192,36 +223,91 @@ npm run dev
 # → API available at http://localhost:3001
 ```
 
-### **6. Access Application:**
+### **6. Verify Everything Works:**
+
+**Test Backend:**
+
+```bash
+# Health check
+curl http://localhost:3001/api/health
+# Expected: {"status":"ok","database":"connected",...}
+
+# List projects
+curl http://localhost:3001/api/projects | jq
+# Expected: Array with 10 projects
+```
+
+**Access Points:**
 
 -   **Frontend:** http://localhost:5173
--   **API Endpoints:** http://localhost:3001/api/projects
+-   **Backend API:** http://localhost:3001/api/projects
+-   **Health Check:** http://localhost:3001/api/health
 -   **Prisma Studio:** http://localhost:5555 (if running `npx prisma studio`)
 
 ---
 
-## 🚀 **Production Deployment**
+## 🚀 **Production Deployment (Railway)**
 
-### **Railway Deployment Details:**
+### **Live Application:**
 
--   **Live URL:** [https://krubshowroom-production.up.railway.app](https://krubshowroom-production.up.railway.app)
--   **Deployment:** Railway cloud (autodeploy from main branch)
+-   **Frontend + Backend:** [https://showroom-fullstack-m3-production.up.railway.app](https://showroom-fullstack-m3-production.up.railway.app)
+-   **API Health:** [https://showroom-fullstack-m3-production.up.railway.app/health](https://showroom-fullstack-m3-production.up.railway.app/health)
+-   **Projects Endpoint:** [https://showroom-fullstack-m3-production.up.railway.app/api/projects](https://showroom-fullstack-m3-production.up.railway.app/api/projects)
 
-**Deployment Configuration:**
+### **Deployment Setup:**
 
--   **Platform:** Railway Cloud Platform
--   **Build Process:** Automatic build from Git repository
--   **Frontend:** Vue.js build served as static files
--   **Backend:** Express.js API with JSON file storage
--   **Environment:** Production with NODE_ENV=production
--   **CORS:** Configured for cross-origin requests
+**1. Create PostgreSQL Database in Railway:**
 
--   **Build scripts:** See package.json for frontend/backend build commands
+-   Add "PostgreSQL" service to your Railway project
+-   Railway automatically provides `DATABASE_URL` variable
+
+**2. Configure Backend Service:**
+
+Add these environment variables in Railway:
+
+```bash
+DATABASE_URL=<provided by Railway PostgreSQL service>
+NODE_ENV=production
+TEACHER_PASSWORD=<your-secure-password>
+```
+
+**3. Set Start Command:**
+
+```bash
+cd api-projects && npx prisma migrate deploy && node server.js
+```
+
+This command:
+
+-   Applies database migrations on deploy
+-   Starts the Express server
+
+**4. Seed Production Database:**
+
+Connect via Railway SSH:
+
+```bash
+railway ssh --project=<project-id> --environment=<env-id> --service=<service-id>
+
+# Inside SSH session:
+cd api-projects
+export DATABASE_URL="<your-railway-database-url>"
+npm run seed
+```
+
+**5. Verify Deployment:**
+
+```bash
+curl https://your-app.up.railway.app/api/health
+curl https://your-app.up.railway.app/api/projects
+```
+
+### **Build Configuration:**
 
 ```json
 {
 	"build": "vite build && cd api-projects && npm install",
-	"start": "cd api-projects && node server.js"
+	"start": "cd api-projects && npx prisma migrate deploy && node server.js"
 }
 ```
 
@@ -355,8 +441,12 @@ _You can choose and describe one advanced feature for interview-level demonstrat
 -   ✅ **Railway Integration** - Production-ready deployment with managed PostgreSQL
 -   ✅ **Database Seeding** - Pre-populated with 10 sample projects
 -   ✅ **Prisma Studio** - Visual database management tool
--   🔐 **Teacher Authentication Middleware** - All write operations protected by teacher key
--   🔍 **Search & Pagination** - Efficient queries with Prisma filters
+-   ✅ **Teacher Authentication Middleware** - All write operations protected by teacher key (x-teacher-key header)
+-   ✅ **Health Check Endpoint** - `/api/health` returns database connection status
+-   ✅ **Data Validation** - Title required on POST/PUT; schema-level constraints
+-   ✅ **Graceful Shutdown** - Proper Prisma client disconnection on server stop
+-   ✅ **Independent Environments** - Local and production databases are completely separate
+-   🔍 **Search & Pagination** - (Planned) Efficient queries with Prisma filters
 
 ### **Advanced Features:**
 
