@@ -44,6 +44,18 @@ app.use("/api/projects", (req, res, next) => {
 // Serve static files from Vue build in production
 if (process.env.NODE_ENV === "production") {
 	app.use(express.static(path.join(__dirname, "../dist")));
+} else {
+	// In development, inform users to use Vite dev server
+	app.get("/", (req, res) => {
+		res.json({
+			message: "Backend API server running",
+			notice: "For development, please access the frontend at http://localhost:5173",
+			apiEndpoints: {
+				health: "/api/health",
+				projects: "/api/projects",
+			},
+		});
+	});
 }
 
 // ENDPOINTS (como @GetMapping, @PostMapping...)
@@ -71,15 +83,113 @@ app.get("/api/health", async (req, res) => {
 	}
 });
 
-// GET /api/projects - Leer todos (como @GetMapping con Prisma)
+// GET /api/projects - Leer todos con búsqueda y paginación
 app.get("/api/projects", async (req, res) => {
 	try {
-		const projects = await prisma.project.findMany({
-			orderBy: {
-				id: "asc", // Ordenar por ID ascendente
+		// Extract query parameters with defaults
+		const search = req.query.search || "";
+		const page = parseInt(req.query.page) || 1;
+		const pageSize = parseInt(req.query.pageSize) || 6;
+		const featuredOnly = req.query.featured === "true"; // Filtro de featured
+
+		// Build where clause for search (title or technologies)
+		// For case-insensitive array search in PostgreSQL, we need to use raw SQL
+		let where = {};
+		let projects;
+		let total;
+
+		if (search) {
+			const searchLower = search.toLowerCase();
+
+			// Dos queries diferentes según featured o no
+			if (featuredOnly) {
+				// Con filtro featured
+				projects = await prisma.$queryRaw`
+					SELECT * FROM "Project"
+					WHERE 
+						featured = true
+						AND (
+							LOWER(title) LIKE ${`%${searchLower}%`}
+							OR LOWER(description) LIKE ${`%${searchLower}%`}
+							OR EXISTS (
+								SELECT 1 FROM unnest(technologies) AS tech
+								WHERE LOWER(tech) LIKE ${`%${searchLower}%`}
+							)
+						)
+					ORDER BY id ASC
+					LIMIT ${pageSize}
+					OFFSET ${(page - 1) * pageSize}
+				`;
+
+				const countResult = await prisma.$queryRaw`
+					SELECT COUNT(*)::int as count FROM "Project"
+					WHERE 
+						featured = true
+						AND (
+							LOWER(title) LIKE ${`%${searchLower}%`}
+							OR LOWER(description) LIKE ${`%${searchLower}%`}
+							OR EXISTS (
+								SELECT 1 FROM unnest(technologies) AS tech
+								WHERE LOWER(tech) LIKE ${`%${searchLower}%`}
+							)
+						)
+				`;
+				total = countResult[0].count;
+			} else {
+				// Sin filtro featured
+				projects = await prisma.$queryRaw`
+					SELECT * FROM "Project"
+					WHERE 
+						LOWER(title) LIKE ${`%${searchLower}%`}
+						OR LOWER(description) LIKE ${`%${searchLower}%`}
+						OR EXISTS (
+							SELECT 1 FROM unnest(technologies) AS tech
+							WHERE LOWER(tech) LIKE ${`%${searchLower}%`}
+						)
+					ORDER BY id ASC
+					LIMIT ${pageSize}
+					OFFSET ${(page - 1) * pageSize}
+				`;
+
+				const countResult = await prisma.$queryRaw`
+					SELECT COUNT(*)::int as count FROM "Project"
+					WHERE 
+						LOWER(title) LIKE ${`%${searchLower}%`}
+						OR LOWER(description) LIKE ${`%${searchLower}%`}
+						OR EXISTS (
+							SELECT 1 FROM unnest(technologies) AS tech
+							WHERE LOWER(tech) LIKE ${`%${searchLower}%`}
+						)
+				`;
+				total = countResult[0].count;
+			}
+		} else {
+			// No search - use regular Prisma queries con filtro featured
+			const whereClause = featuredOnly ? { featured: true } : {};
+
+			total = await prisma.project.count({ where: whereClause });
+			projects = await prisma.project.findMany({
+				where: whereClause,
+				skip: (page - 1) * pageSize,
+				take: pageSize,
+				orderBy: {
+					id: "asc",
+				},
+			});
+		}
+
+		// Return data with pagination metadata
+		res.json({
+			data: projects,
+			meta: {
+				total,
+				page,
+				pageSize,
+				totalPages: Math.ceil(total / pageSize),
+				hasNextPage: page < Math.ceil(total / pageSize),
+				hasPrevPage: page > 1,
 			},
 		});
-		res.json(projects);
 	} catch (error) {
 		console.error("Error fetching projects:", error);
 		res.status(500).json({ error: "Failed to fetch projects" });
@@ -180,13 +290,7 @@ app.delete("/api/projects/:id", async (req, res) => {
 // Serve Vue app for any routes not handled by API (SPA fallback)
 if (process.env.NODE_ENV === "production") {
 	// Handle specific frontend routes that we know exist
-	const frontendRoutes = [
-		"/",
-		"/home",
-		"/projects",
-		"/contact",
-		"/api-projects",
-	];
+	const frontendRoutes = ["/", "/home", "/projects", "/contact", "/crud"];
 
 	frontendRoutes.forEach((route) => {
 		app.get(route, (req, res) => {
@@ -220,10 +324,16 @@ process.on("SIGTERM", async () => {
 });
 
 app.listen(PORT, () => {
-	console.log(`API Server running on http://localhost:${PORT}`);
-	console.log(
-		`API endpoints available at http://localhost:${PORT}/api/projects`
-	);
-	console.log(`Database: PostgreSQL with Prisma ORM`);
-	console.log(`Health check: http://localhost:${PORT}/api/health`);
+	console.log(`\n🚀 API Server running on http://localhost:${PORT}`);
+	console.log(`📊 Database: PostgreSQL with Prisma ORM`);
+	console.log(`\n🔗 API Endpoints:`);
+	console.log(`   Health: http://localhost:${PORT}/api/health`);
+	console.log(`   Projects: http://localhost:${PORT}/api/projects`);
+
+	if (process.env.NODE_ENV !== "production") {
+		console.log(`\n⚠️  DEVELOPMENT MODE:`);
+		console.log(`   Frontend (Vite): http://localhost:5173`);
+		console.log(`   Backend (Express): http://localhost:${PORT}`);
+		console.log(`   👉 Access the app at: http://localhost:5173\n`);
+	}
 });

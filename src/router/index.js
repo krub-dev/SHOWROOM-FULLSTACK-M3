@@ -29,7 +29,7 @@ const routes = [
 		component: Contact,
 	},
 	{
-		path: "/api-projects", // URL "/api-projects" - CRUD con API Express
+		path: "/crud", // URL "/crud" - CRUD con API Express
 		name: "ApiProjects", // Nombre de la ruta
 		component: ApiProjects,
 	},

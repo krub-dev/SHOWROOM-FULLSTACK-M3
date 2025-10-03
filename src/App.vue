@@ -58,11 +58,11 @@ const closeMobileMenu = () => {
 						>Contact</router-link
 					>
 					<router-link
-						to="/api-projects"
+						to="/crud"
 						class="nav-link"
 						active-class="active"
 						@click="closeMobileMenu"
-						>API CRUD</router-link
+						>ADMIN</router-link
 					>
 				</div>
 			</nav>

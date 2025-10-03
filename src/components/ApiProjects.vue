@@ -12,32 +12,10 @@
 						<span class="code-variable">apiUrl </span>
 						<span class="code-operator">= </span>
 						<span class="code-string">"{{ apiUrl }}"</span>
-						<!-- Cambia esto -->
 						<span class="code-bracket">;</span>
 					</div>
 				</div>
 			</header>
-
-			<!-- Dev tool: quick health check -->
-			<div
-				class="api-tools"
-				style="
-					display: flex;
-					gap: 8px;
-					margin: 0 0 12px;
-					align-items: center;
-					justify-content: center;
-				"
-			>
-				<button @click="checkHealth" class="auth-btn">
-					Probar conexión
-				</button>
-				<span
-					v-if="healthStatus"
-					style="font-size: 0.9em; color: #ccc"
-					>{{ healthStatus }}</span
-				>
-			</div>
 
 			<!-- Teacher Authentication Panel -->
 			<div v-if="!teacherAuthenticated" class="teacher-auth-panel">
@@ -71,24 +49,42 @@
 
 			<!-- Control Panel -->
 			<div v-if="teacherAuthenticated" class="control-panel">
-				<div class="project-selector">
-					<select
-						id="projectSelect"
-						v-model="selectedProjectId"
-						@change="handleSelection"
-					>
-						<option value="CREATE_NEW">
-							➕ Create New Project
-						</option>
-						<option disabled>---</option>
-						<option
-							v-for="project in projects"
-							:key="project.id"
-							:value="project.id"
+				<div class="panel-header">
+					<div class="project-selector">
+						<select
+							id="projectSelect"
+							v-model="selectedProjectId"
+							@change="handleSelection"
 						>
-							📁 {{ project.title }}
-						</option>
-					</select>
+							<option value="CREATE_NEW">
+								➕ Create New Project
+							</option>
+							<option disabled>---</option>
+							<option
+								v-for="project in projects"
+								:key="project.id"
+								:value="project.id"
+							>
+								📁 {{ project.title }}
+							</option>
+						</select>
+					</div>
+
+					<!-- Health check minimalista -->
+					<button
+						@click="checkHealth"
+						class="health-btn-mini"
+						:class="{ checking: checking }"
+						:title="healthStatus || 'Test API connection'"
+					>
+						<span v-if="!checking">🔌</span>
+						<span v-else>⏳</span>
+						<span
+							v-if="healthStatus"
+							class="status-indicator"
+							:class="healthStatusClass"
+						></span>
+					</button>
 				</div>
 
 				<!-- Action buttons - only show when a real project is selected -->
@@ -311,6 +307,8 @@ export default {
 			teacherAuthenticated: false,
 			teacherPassword: "",
 			healthStatus: "",
+			checking: false,
+			healthStatusClass: "",
 		};
 	},
 	computed: {
@@ -327,17 +325,25 @@ export default {
 	methods: {
 		async checkHealth() {
 			this.healthStatus = "";
+			this.healthStatusClass = "";
+			this.checking = true;
 			try {
 				const res = await fetch("/api/health");
 				if (!res.ok) throw new Error("Health check failed");
 				const data = await res.json();
-				this.healthStatus =
-					data?.status === "ok"
-						? `OK - DB: ${data.database}`
-						: "ERROR";
+				if (data?.status === "ok") {
+					this.healthStatus = `✓ OK - DB: ${data.database}`;
+					this.healthStatusClass = "status-success";
+				} else {
+					this.healthStatus = "✗ ERROR";
+					this.healthStatusClass = "status-error";
+				}
 			} catch (e) {
-				this.healthStatus = "ERROR de conexión";
+				this.healthStatus = "✗ Connection failed";
+				this.healthStatusClass = "status-error";
 				console.error(e);
+			} finally {
+				this.checking = false;
 			}
 		},
 		// Jarko authentication
@@ -375,16 +381,23 @@ export default {
 		async loadProjects(showMessage = true) {
 			try {
 				this.loading = true;
-				console.log("API URL used:", this.apiUrl);
-				const response = await fetch(this.apiUrl);
+				// Usar pageSize grande para obtener todos los proyectos
+				const url = `${this.apiUrl}?pageSize=100`;
+				console.log("API URL used:", url);
+				const response = await fetch(url);
 
 				if (!response.ok) {
 					throw new Error(`HTTP error! status: ${response.status}`);
 				}
 
-				this.projects = await response.json();
+				const result = await response.json();
+				// La API ahora devuelve { data: [], meta: {} }
+				this.projects = result.data || result;
 				if (showMessage) {
-					this.showMessage("Projects loaded successfully", "warning");
+					this.showMessage(
+						`${this.projects.length} projects loaded successfully`,
+						"warning"
+					);
 				}
 			} catch (error) {
 				console.error("Error loading projects:", error);
@@ -628,7 +641,52 @@ export default {
 .code-subtitle {
 	font-size: 0.9rem;
 	color: #ccc;
-	margin-bottom: 1rem;
+	margin-bottom: 1.5rem;
+}
+
+/* Health Check Minimalista */
+.health-btn-mini {
+	background: transparent;
+	color: #f5ca1c;
+	border: 1px solid #555;
+	padding: 0.5rem 0.75rem;
+	border-radius: 6px;
+	font-size: 1.2rem;
+	cursor: pointer;
+	transition: all 0.3s ease;
+	position: relative;
+	display: flex;
+	align-items: center;
+	gap: 0.3rem;
+}
+
+.health-btn-mini:hover {
+	border-color: #f5ca1c;
+	background: rgba(245, 202, 28, 0.1);
+}
+
+.health-btn-mini.checking {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+.status-indicator {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	position: absolute;
+	top: 4px;
+	right: 4px;
+}
+
+.status-indicator.status-success {
+	background: #4caf50;
+	box-shadow: 0 0 6px #4caf50;
+}
+
+.status-indicator.status-error {
+	background: #f44336;
+	box-shadow: 0 0 6px #f44336;
 }
 
 .code-comment {
@@ -1042,13 +1100,28 @@ export default {
 	font-size: 1.2rem;
 }
 
-.project-selector {
+.panel-header {
+	position: relative;
 	display: flex;
 	justify-content: center;
+	align-items: center;
 	margin-bottom: 1.5rem;
 }
 
+.project-selector {
+	width: 100%;
+	max-width: 500px;
+}
+
+.health-btn-mini {
+	position: absolute;
+	right: 0;
+	top: 50%;
+	transform: translateY(-50%);
+}
+
 .project-selector select {
+	width: 100%;
 	padding: 0.75rem 1rem;
 	background: #2d2d2d;
 	border: 2px solid #f5ca1c;

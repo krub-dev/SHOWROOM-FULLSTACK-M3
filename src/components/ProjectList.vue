@@ -3,18 +3,50 @@ import { ref, computed, onMounted } from "vue";
 
 const openAccordion = ref(null);
 const showOnlyFeatured = ref(true);
-const projects = ref([]); // Cambia a un ref para manejar datos dinámicos
+const projects = ref([]); // Proyectos paginados desde la API
 
-// Función para cargar proyectos desde la API
+// Búsqueda y paginación
+const searchQuery = ref("");
+const currentPage = ref(1);
+const pageSize = ref(6);
+const totalPages = ref(1);
+const totalProjects = ref(0);
+const isLoading = ref(false);
+const hasError = ref(false);
+
+let searchTimeout = null;
+
+// Función para cargar proyectos desde la API con búsqueda y paginación
 async function loadProjects() {
+	isLoading.value = true;
+	hasError.value = false;
 	try {
-		const response = await fetch("/api/projects");
+		// Construir query params
+		const params = new URLSearchParams({
+			search: searchQuery.value,
+			page: currentPage.value.toString(),
+			pageSize: pageSize.value.toString(),
+		});
+
+		// Agregar filtro de featured si está activo
+		if (showOnlyFeatured.value) {
+			params.append("featured", "true");
+		}
+
+		const response = await fetch(`/api/projects?${params}`);
 		if (!response.ok) {
 			throw new Error("Error al cargar los proyectos");
 		}
-		projects.value = await response.json();
+
+		const data = await response.json();
+		projects.value = data.data;
+		totalPages.value = data.meta.totalPages;
+		totalProjects.value = data.meta.total;
 	} catch (error) {
 		console.error("Error:", error);
+		hasError.value = true;
+	} finally {
+		isLoading.value = false;
 	}
 }
 
@@ -28,15 +60,58 @@ function toggleAccordion(index) {
 }
 
 function toggleFeatured() {
-	showOnlyFeatured.value = !showOnlyFeatured.value;
+	// El v-model ya cambió el valor, solo recargamos
 	openAccordion.value = null; // Close any open accordion when switching
+	currentPage.value = 1; // Reset a página 1
+	loadProjects(); // Recargar proyectos con filtro
 }
 
-const filteredProjects = computed(() => {
-	return showOnlyFeatured.value
-		? projects.value.filter((p) => p.featured === true)
-		: projects.value;
-});
+// Búsqueda con debounce (espera 500ms después de dejar de escribir)
+function handleSearch() {
+	if (searchTimeout) clearTimeout(searchTimeout);
+
+	searchTimeout = setTimeout(() => {
+		currentPage.value = 1; // Reset a página 1 al buscar
+		openAccordion.value = null; // Cerrar accordions al buscar
+		loadProjects();
+	}, 500);
+}
+
+// Función para buscar por tecnología (click en tag)
+function searchByTech(tech) {
+	searchQuery.value = tech;
+	currentPage.value = 1;
+	openAccordion.value = null;
+	loadProjects();
+}
+
+// Navegación de páginas
+function nextPage() {
+	if (currentPage.value < totalPages.value) {
+		currentPage.value++;
+		openAccordion.value = null;
+		loadProjects();
+		window.scrollTo({ top: 0, behavior: "smooth" });
+	}
+}
+
+function prevPage() {
+	if (currentPage.value > 1) {
+		currentPage.value--;
+		openAccordion.value = null;
+		loadProjects();
+		window.scrollTo({ top: 0, behavior: "smooth" });
+	}
+}
+
+function goToPage(page) {
+	if (page >= 1 && page <= totalPages.value) {
+		currentPage.value = page;
+		openAccordion.value = null;
+		loadProjects();
+		window.scrollTo({ top: 0, behavior: "smooth" });
+	}
+}
 </script>
 
 <template>
@@ -47,18 +122,75 @@ const filteredProjects = computed(() => {
 			</h3>
 		</div>
 
-		<div class="projects-controls">
-			<button @click="toggleFeatured" class="toggle-btn">
-				{{
-					showOnlyFeatured
-						? "Show All Projects"
-						: "Show Featured Only"
-				}}
-			</button>
+		<!-- Barra de búsqueda y filtros -->
+		<div class="search-and-filters">
+			<p class="projects-subtitle" v-if="totalProjects > 0 && !isLoading">
+				{{ totalProjects }}
+				{{ totalProjects === 1 ? "project" : "projects" }} found
+			</p>
+
+			<div class="search-controls">
+				<div class="search-container">
+					<input
+						v-model="searchQuery"
+						@input="handleSearch"
+						type="text"
+						placeholder="🔍 Search projects by title, description or technology..."
+						class="search-input"
+						:disabled="isLoading"
+					/>
+					<button
+						v-if="searchQuery"
+						@click="
+							searchQuery = '';
+							handleSearch();
+						"
+						class="clear-search-btn"
+						title="Clear search"
+					>
+						✕
+					</button>
+				</div>
+
+				<div class="featured-filter">
+					<label class="checkbox-label">
+						<input
+							type="checkbox"
+							v-model="showOnlyFeatured"
+							@change="toggleFeatured"
+							class="featured-checkbox"
+						/>
+						<span class="checkbox-text">Featured only</span>
+					</label>
+				</div>
+			</div>
 		</div>
+
+		<!-- Estado de loading -->
+		<div v-if="isLoading" class="loading-state">
+			<div class="spinner"></div>
+			<p>Loading projects...</p>
+		</div>
+
+		<!-- Estado de error -->
+		<div v-else-if="hasError" class="error-state">
+			<p>❌ Error loading projects. Please try again.</p>
+			<button @click="loadProjects" class="retry-btn">Retry</button>
+		</div>
+
+		<!-- Sin resultados -->
+		<div v-else-if="projects.length === 0" class="no-results">
+			<p>🔍 No projects found</p>
+			<p v-if="searchQuery" class="no-results-hint">
+				Try searching with different keywords
+			</p>
+		</div>
+
+		<!-- Lista de proyectos -->
 		<div
-			v-for="(project, idx) in filteredProjects"
-			:key="project.title"
+			v-else
+			v-for="(project, idx) in projects"
+			:key="project.id"
 			class="project-accordion"
 		>
 			<div class="accordion-wrapper">
@@ -72,12 +204,15 @@ const filteredProjects = computed(() => {
 					<div class="project-info">
 						<p>{{ project.description }}</p>
 						<div class="tech-list">
-							<span
+							<button
 								v-for="tech in project.technologies"
 								:key="tech"
 								class="tech-chip"
-								>{{ tech }}</span
+								@click="searchByTech(tech)"
+								:title="`Search for ${tech} projects`"
 							>
+								{{ tech }}
+							</button>
 						</div>
 						<div class="project-img-row">
 							<img
@@ -104,6 +239,44 @@ const filteredProjects = computed(() => {
 				</div>
 			</div>
 		</div>
+
+		<!-- Controles de paginación -->
+		<div v-if="totalPages > 1 && !isLoading" class="pagination-controls">
+			<button
+				@click="prevPage"
+				:disabled="currentPage === 1"
+				class="pagination-btn"
+			>
+				← Previous
+			</button>
+
+			<div class="pagination-info">
+				<span class="page-numbers">
+					<button
+						v-for="page in totalPages"
+						:key="page"
+						@click="goToPage(page)"
+						:class="[
+							'page-number',
+							{ active: page === currentPage },
+						]"
+					>
+						{{ page }}
+					</button>
+				</span>
+				<span class="page-text">
+					Page {{ currentPage }} of {{ totalPages }}
+				</span>
+			</div>
+
+			<button
+				@click="nextPage"
+				:disabled="currentPage === totalPages"
+				class="pagination-btn"
+			>
+				Next →
+			</button>
+		</div>
 	</div>
 </template>
 
@@ -127,39 +300,185 @@ const filteredProjects = computed(() => {
 	justify-content: center;
 	align-items: center;
 	margin-top: 4em;
-	margin-bottom: 2.5em;
+	margin-bottom: 1em;
 }
 
-.projects-controls {
+.projects-subtitle {
+	color: #666;
+	font-size: 0.8em;
+	margin: 0 0 0.4rem 0;
+	font-weight: 500;
+	width: 100%;
+	text-align: left;
+}
+
+/* Barra de búsqueda y filtros */
+.search-and-filters {
 	display: flex;
-	justify-content: flex-end;
-	margin-bottom: 1.5em;
-	padding-right: 2em;
+	flex-direction: column;
+	align-items: flex-start;
+	margin-bottom: 1rem;
+	width: 90%;
+	margin-left: auto;
+	margin-right: auto;
 }
 
-.toggle-btn {
-	background: #1e1e1e;
-	color: #f5ca1c;
-	border: 1px solid #1e1e1e;
-	padding: 0.5rem 1rem;
+.search-controls {
+	display: flex;
+	gap: 1rem;
+	align-items: center;
+	flex-wrap: wrap;
+	width: 100%;
+}
+
+.search-container {
+	flex: 0 1 auto;
+	min-width: 280px;
+	max-width: 450px;
+	position: relative;
+	display: flex;
+	align-items: center;
+}
+
+.search-input {
+	width: 100%;
+	padding: 0.7rem 2.5rem 0.7rem 1rem;
+	font-size: 0.95rem;
+	border: 2px solid #ddd;
+	border-radius: 8px;
+	background: #ffffff;
+	color: #1e1e1e;
+	transition: all 0.3s ease;
+}
+
+.search-input:focus {
+	outline: none;
+	border-color: #f5ca1c;
+	box-shadow: 0 2px 8px rgba(245, 202, 28, 0.2);
+}
+
+.search-input:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.clear-search-btn {
+	position: absolute;
+	right: 0.5rem;
+	background: none;
+	border: none;
+	color: #999;
+	font-size: 1.2rem;
+	cursor: pointer;
+	padding: 0.25rem 0.5rem;
+	border-radius: 4px;
+	transition: all 0.2s ease;
+}
+
+.clear-search-btn:hover {
+	background: #f0f0f0;
+	color: #1e1e1e;
+}
+
+
+
+.checkbox-label {
+	display: flex;
+	align-items: center;
+	gap: 0.6rem;
+	cursor: pointer;
+	user-select: none;
+	padding: 0.7rem 1rem;
+	border-radius: 8px;
+	background: transparent;
+	border: 2px solid transparent;
+	transition: all 0.2s ease;
+}
+
+.checkbox-label:hover {
+	background: rgba(255, 255, 255, 0.1);
+}
+
+.featured-checkbox {
+	width: 1.2rem;
+	height: 1.2rem;
+	cursor: pointer;
+	accent-color: #f5ca1c;
+	transition: transform 0.2s ease;
+}
+
+.featured-checkbox:hover {
+	transform: scale(1.1);
+}
+
+.checkbox-text {
+	font-size: 0.9rem;
+	font-weight: 600;
+	color: #1e1e1e;
+	white-space: nowrap;
+	font-family: "Montserrat", sans-serif;
+}
+
+/* Estados de loading/error */
+.loading-state,
+.error-state,
+.no-results {
+	text-align: center;
+	padding: 3em 2em;
+	color: #666;
+}
+
+.spinner {
+	width: 50px;
+	height: 50px;
+	border: 4px solid #f3f3f3;
+	border-top: 4px solid #f5ca1c;
+	border-radius: 50%;
+	animation: spin 1s linear infinite;
+	margin: 0 auto 1em;
+}
+
+@keyframes spin {
+	0% {
+		transform: rotate(0deg);
+	}
+	100% {
+		transform: rotate(360deg);
+	}
+}
+
+.error-state p {
+	color: #d32f2f;
+	font-weight: 600;
+	margin-bottom: 1em;
+}
+
+.retry-btn {
+	background: #d32f2f;
+	color: white;
+	border: none;
+	padding: 0.7em 1.5em;
 	border-radius: 6px;
+	cursor: pointer;
 	font-family: "Montserrat", sans-serif;
 	font-weight: 600;
-	font-size: 0.75em;
-	text-transform: uppercase;
-	letter-spacing: 0.03em;
-	cursor: pointer;
 	transition: all 0.3s ease;
-	opacity: 0.8;
 }
 
-.toggle-btn:hover {
-	background: transparent;
-	color: #1e1e1e;
-	border-color: #1e1e1e;
-	opacity: 1;
-	transform: translateY(-1px);
-	box-shadow: 0 2px 8px rgba(30, 30, 30, 0.2);
+.retry-btn:hover {
+	background: #b71c1c;
+	transform: translateY(-2px);
+	box-shadow: 0 4px 8px rgba(211, 47, 47, 0.3);
+}
+
+.no-results {
+	font-size: 1.2em;
+}
+
+.no-results-hint {
+	font-size: 0.9em;
+	color: #999;
+	margin-top: 0.5em;
 }
 
 .projects-list {
@@ -314,11 +633,15 @@ const filteredProjects = computed(() => {
 	font-weight: 600;
 	box-shadow: 0 2px 4px rgba(245, 202, 28, 0.2);
 	transition: all 0.2s ease;
+	cursor: pointer;
+	border: none;
+	font-family: "Montserrat", sans-serif;
 }
 
 .tech-chip:hover {
 	transform: translateY(-1px);
 	box-shadow: 0 3px 6px rgba(245, 202, 28, 0.3);
+	background: #ffd738;
 }
 
 .rating {
@@ -351,21 +674,112 @@ const filteredProjects = computed(() => {
 	box-shadow: 0 4px 8px rgba(245, 202, 28, 0.3);
 }
 
+/* Paginación */
+.pagination-controls {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: 1em;
+	margin: 3em auto 2em;
+	flex-wrap: wrap;
+}
+
+.pagination-btn {
+	background: #1e1e1e;
+	color: #f5ca1c;
+	border: 1px solid #1e1e1e;
+	padding: 0.7em 1.5em;
+	border-radius: 6px;
+	font-family: "Montserrat", sans-serif;
+	font-weight: 600;
+	cursor: pointer;
+	transition: all 0.3s ease;
+	font-size: 0.9em;
+}
+
+.pagination-btn:hover:not(:disabled) {
+	background: #333;
+	transform: translateY(-2px);
+	box-shadow: 0 4px 8px rgba(30, 30, 30, 0.2);
+}
+
+.pagination-btn:disabled {
+	opacity: 0.4;
+	cursor: not-allowed;
+}
+
+.pagination-info {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.5em;
+}
+
+.page-numbers {
+	display: flex;
+	gap: 0.5em;
+}
+
+.page-number {
+	background: white;
+	color: #1e1e1e;
+	border: 1px solid #ddd;
+	width: 35px;
+	height: 35px;
+	border-radius: 6px;
+	cursor: pointer;
+	font-family: "Montserrat", sans-serif;
+	font-weight: 600;
+	transition: all 0.3s ease;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.page-number:hover {
+	border-color: #f5ca1c;
+	background: #fffbf0;
+}
+
+.page-number.active {
+	background: #f5ca1c;
+	color: #1e1e1e;
+	border-color: #f5ca1c;
+}
+
+.page-text {
+	font-size: 0.9em;
+	color: #666;
+	font-weight: 500;
+}
+
 /* Toggle Button Responsive Styles */
 @media (max-width: 768px) {
 	.projects-title {
 		font-size: 2rem;
 	}
 
-	.projects-controls {
-		padding-right: 1rem;
-		padding-left: 1rem;
-		margin-bottom: 1rem;
+	.search-and-filters {
+		flex-direction: column;
+		width: 90%;
+		margin: 0 auto 1.5rem;
 	}
 
-	.toggle-btn {
-		padding: 0.7rem 1.2rem;
-		font-size: 0.8em;
+	.search-container {
+		width: 100%;
+		min-width: auto;
+		max-width: 100%;
+	}
+
+	.search-input {
+		font-size: 0.9em;
+		padding: 0.9em 2.5em 0.9em 0.9em;
+	}
+
+	
+
+	.checkbox-label {
+		padding: 0.7rem 1rem;
 	}
 
 	.accordion-header {
@@ -392,6 +806,21 @@ const filteredProjects = computed(() => {
 		height: auto;
 		border-radius: 6px;
 	}
+
+	.pagination-controls {
+		gap: 0.5em;
+	}
+
+	.pagination-btn {
+		padding: 0.5em 1em;
+		font-size: 0.8em;
+	}
+
+	.page-number {
+		width: 30px;
+		height: 30px;
+		font-size: 0.85em;
+	}
 }
 
 @media (max-width: 480px) {
@@ -402,7 +831,11 @@ const filteredProjects = computed(() => {
 
 	.projects-main-title {
 		margin-top: 2em;
-		margin-bottom: 1.5em;
+		margin-bottom: 1em;
+	}
+
+	.search-input {
+		font-size: 0.85em;
 	}
 
 	.accordion-header {
@@ -449,6 +882,16 @@ const filteredProjects = computed(() => {
 	.rating {
 		font-size: 0.9rem;
 		margin-top: 0;
+	}
+
+	.pagination-controls {
+		flex-direction: column;
+		gap: 1em;
+	}
+
+	.pagination-btn {
+		width: 100%;
+		max-width: 200px;
 	}
 }
 </style>
