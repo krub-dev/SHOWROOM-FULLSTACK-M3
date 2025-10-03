@@ -251,7 +251,7 @@ curl http://localhost:3001/api/projects | jq
 ### **Live Application:**
 
 -   **Frontend + Backend:** [https://showroom-fullstack-m3-production.up.railway.app](https://showroom-fullstack-m3-production.up.railway.app)
--   **API Health:** [https://showroom-fullstack-m3-production.up.railway.app/health](https://showroom-fullstack-m3-production.up.railway.app/health)
+-   **API Health:** [https://showroom-fullstack-m3-production.up.railway.app/api/health](https://showroom-fullstack-m3-production.up.railway.app/api/health)
 -   **Projects Endpoint:** [https://showroom-fullstack-m3-production.up.railway.app/api/projects](https://showroom-fullstack-m3-production.up.railway.app/api/projects)
 
 ### **Deployment Setup:**
@@ -313,27 +313,50 @@ curl https://your-app.up.railway.app/api/projects
 
 ## 🧩 **API Endpoints**
 
-| Method | Endpoint                                | Description                   | Body         | Notes                       |
-| ------ | --------------------------------------- | ----------------------------- | ------------ | --------------------------- |
-| GET    | `/api/projects`                         | Get all projects              | -            | Supports search, pagination |
-| GET    | `/api/projects?search=&page=&pageSize=` | List with search & pagination | -            | Filters by title/tags       |
-| POST   | `/api/projects`                         | Create new project            | Project JSON | Requires teacher key        |
-| PUT    | `/api/projects/:id`                     | Update project                | Project JSON | Requires teacher key        |
-| DELETE | `/api/projects/:id`                     | Delete project                | -            | Requires teacher key        |
-| GET    | `/api/health`                           | Health check                  | -            | DB/API connection test      |
+| Method | Endpoint                                | Description                   | Auth Required | Notes                       |
+| ------ | --------------------------------------- | ----------------------------- | ------------- | --------------------------- |
+| GET    | `/api/projects`                         | Get all projects              | No            | Supports search, pagination |
+| GET    | `/api/projects?search=&page=&pageSize=` | List with search & pagination | No            | Filters by title/tags       |
+| POST   | `/api/projects`                         | Create new project            | Yes           | x-teacher-key header        |
+| PUT    | `/api/projects/:id`                     | Update project                | Yes           | x-teacher-key header        |
+| DELETE | `/api/projects/:id`                     | Delete project                | Yes           | x-teacher-key header        |
+| GET    | `/api/health`                           | Health check                  | No            | DB/API connection test      |
 
-**Project Schema Example:**
+**Request Body Schema (POST/PUT):**
 
 ```json
 {
-	"id": 1,
-	"title": "Project Title",
-	"description": "Description...",
-	"technologies": ["Vue.js", "Express.js"],
-	"featured": true,
-	"createdAt": "2025-09-27T10:00:00Z",
-	"updatedAt": "2025-09-28T14:00:00Z"
+	"title": "Project Title", // Required: string
+	"description": "Project description", // Required: string
+	"image": "https://...", // Optional: string (URL)
+	"technologies": ["Vue.js", "Node.js"], // Required: array of strings
+	"rating": 5, // Optional: integer (default: 5)
+	"repo": "https://github.com/...", // Optional: string (URL)
+	"featured": false // Optional: boolean (default: false)
 }
+```
+
+**Response Schema:**
+
+```json
+{
+	"id": 1, // Auto-generated
+	"title": "Project Title",
+	"description": "Project description",
+	"image": "https://...",
+	"technologies": ["Vue.js", "Node.js"],
+	"rating": 5,
+	"repo": "https://github.com/...",
+	"featured": false,
+	"createdAt": "2025-10-03T10:00:00.000Z", // Auto-generated
+	"updatedAt": "2025-10-03T10:00:00.000Z" // Auto-updated
+}
+```
+
+**Authentication Header (for POST/PUT/DELETE):**
+
+```bash
+x-teacher-key: <your-teacher-password>
 ```
 
 ## 🔍 **Features**
