@@ -54,7 +54,7 @@ api-projects/package-lock.json
 *.sqlite3
 
 # Prisma
-api-projects/prisma/migrations/
+# api-projects/prisma/migrations/ (comentado para permitir deploy a Railway)
 api-projects/generated/
 
 # PostgreSQL
