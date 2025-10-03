@@ -1,7 +1,9 @@
-html, body {
+html,
+body {
   overflow-x: hidden;
   max-width: 100vw;
 }
+
 :root {
   --color-bg: #1e1e1e;
   --color-text: #dbdbdb;
@@ -27,7 +29,7 @@ body {
   margin-top: -5em;
   position: relative;
   left: 0%;
-  
+
 }
 
 a {
@@ -48,4 +50,27 @@ h2 {
   font-size: 2em;
   margin: 0.2em 0 1em 0;
   color: var(--color-secondary);
+}
+
+/* Accessibility: Visible focus for keyboard navigation */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 3px solid #f5ca1c;
+  outline-offset: 2px;
+}
+
+/* Accessibility: Respect user's motion preferences */
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

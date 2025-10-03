@@ -1,0 +1,414 @@
+{
+	"info": {
+		"_postman_id": "showroom-api-collection-2025",
+		"name": "Showroom API - CRUD Projects",
+		"description": "Complete API collection for Showroom Fullstack M3 project. Includes all CRUD operations, search, pagination, and teacher authentication.\n\n**Features:**\n- Health check endpoint\n- Get all projects with search, pagination, and featured filter\n- Create, update, and delete projects (requires teacher authentication)\n- Automated tests for each endpoint\n\n**Authentication:**\nWrite operations require the `x-teacher-key` header with value: `ironhack2025`",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Health Check",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Response has correct structure\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('status');",
+							"    pm.expect(jsonData).to.have.property('database');",
+							"    pm.expect(jsonData).to.have.property('timestamp');",
+							"});",
+							"",
+							"pm.test(\"Database is connected\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.status).to.eql('ok');",
+							"    pm.expect(jsonData.database).to.eql('connected');",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/health",
+					"host": ["{{base_url}}"],
+					"path": ["api", "health"]
+				},
+				"description": "Check if the API and database are healthy and responding correctly."
+			},
+			"response": []
+		},
+		{
+			"name": "Get All Projects",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Response has data and meta\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('data');",
+							"    pm.expect(jsonData).to.have.property('meta');",
+							"    pm.expect(jsonData.data).to.be.an('array');",
+							"});",
+							"",
+							"pm.test(\"Meta has pagination info\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.meta).to.have.property('total');",
+							"    pm.expect(jsonData.meta).to.have.property('page');",
+							"    pm.expect(jsonData.meta).to.have.property('pageSize');",
+							"    pm.expect(jsonData.meta).to.have.property('totalPages');",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/projects?page=1&pageSize=6",
+					"host": ["{{base_url}}"],
+					"path": ["api", "projects"],
+					"query": [
+						{
+							"key": "page",
+							"value": "1",
+							"description": "Page number (default: 1)"
+						},
+						{
+							"key": "pageSize",
+							"value": "6",
+							"description": "Items per page (default: 6)"
+						},
+						{
+							"key": "search",
+							"value": "",
+							"description": "Search by title, description or technology",
+							"disabled": true
+						},
+						{
+							"key": "featured",
+							"value": "true",
+							"description": "Filter featured projects only",
+							"disabled": true
+						}
+					]
+				},
+				"description": "Get all projects with pagination. Supports search and featured filter.\n\n**Query Parameters:**\n- `page`: Page number (default: 1)\n- `pageSize`: Items per page (default: 6)\n- `search`: Search term (searches in title, description, technologies)\n- `featured`: Filter by featured status (true/false)"
+			},
+			"response": []
+		},
+		{
+			"name": "Search Projects by Technology",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Search returns results\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.data).to.be.an('array');",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/projects?search=Vue&page=1&pageSize=6",
+					"host": ["{{base_url}}"],
+					"path": ["api", "projects"],
+					"query": [
+						{
+							"key": "search",
+							"value": "Vue"
+						},
+						{
+							"key": "page",
+							"value": "1"
+						},
+						{
+							"key": "pageSize",
+							"value": "6"
+						}
+					]
+				},
+				"description": "Example: Search for projects containing 'Vue' in title, description, or technologies."
+			},
+			"response": []
+		},
+		{
+			"name": "Get Featured Projects Only",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"All projects are featured\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    jsonData.data.forEach(function(project) {",
+							"        pm.expect(project.featured).to.eql(true);",
+							"    });",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/projects?featured=true&page=1&pageSize=6",
+					"host": ["{{base_url}}"],
+					"path": ["api", "projects"],
+					"query": [
+						{
+							"key": "featured",
+							"value": "true"
+						},
+						{
+							"key": "page",
+							"value": "1"
+						},
+						{
+							"key": "pageSize",
+							"value": "6"
+						}
+					]
+				},
+				"description": "Get only featured projects with pagination."
+			},
+			"response": []
+		},
+		{
+			"name": "Create Project",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 201\", function () {",
+							"    pm.response.to.have.status(201);",
+							"});",
+							"",
+							"pm.test(\"Project was created\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('id');",
+							"    pm.expect(jsonData).to.have.property('title');",
+							"    pm.expect(jsonData.title).to.include('Test Project');",
+							"});",
+							"",
+							"// Save project ID for update/delete tests",
+							"if (pm.response.code === 201) {",
+							"    var jsonData = pm.response.json();",
+							"    pm.environment.set('test_project_id', jsonData.id);",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-teacher-key",
+						"value": "{{teacher_key}}",
+						"type": "text",
+						"description": "Teacher authentication required"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"title\": \"Test Project from Postman\",\n  \"description\": \"This is a test project created via Postman API testing. It demonstrates the CREATE operation of our CRUD API.\",\n  \"image\": \"https://via.placeholder.com/800x400/f5ca1c/1e1e1e?text=Test+Project\",\n  \"technologies\": [\"Postman\", \"API Testing\", \"Node.js\", \"Express\"],\n  \"rating\": 5,\n  \"repo\": \"https://github.com/krub-dev/test-project\",\n  \"featured\": false\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/projects",
+					"host": ["{{base_url}}"],
+					"path": ["api", "projects"]
+				},
+				"description": "Create a new project. Requires teacher authentication via `x-teacher-key` header.\n\n**Required fields:**\n- `title`: Project title (string)\n\n**Optional fields:**\n- `description`: Project description\n- `image`: Image URL\n- `technologies`: Array of technology strings\n- `rating`: Number 1-5\n- `repo`: Repository URL\n- `featured`: Boolean"
+			},
+			"response": []
+		},
+		{
+			"name": "Update Project",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Project was updated\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('title');",
+							"    pm.expect(jsonData.title).to.include('UPDATED');",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "x-teacher-key",
+						"value": "{{teacher_key}}",
+						"type": "text",
+						"description": "Teacher authentication required"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"title\": \"Test Project from Postman - UPDATED\",\n  \"description\": \"This project has been updated via PUT request. Testing the UPDATE operation of our CRUD API.\",\n  \"image\": \"https://via.placeholder.com/800x400/4a90e2/ffffff?text=Updated+Project\",\n  \"technologies\": [\"Postman\", \"API Testing\", \"Node.js\", \"Express\", \"PostgreSQL\"],\n  \"rating\": 4,\n  \"repo\": \"https://github.com/krub-dev/test-project-updated\",\n  \"featured\": true\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/projects/{{test_project_id}}",
+					"host": ["{{base_url}}"],
+					"path": ["api", "projects", "{{test_project_id}}"]
+				},
+				"description": "Update an existing project by ID. Requires teacher authentication.\n\n**Note:** Replace `{{test_project_id}}` with an actual project ID, or run the CREATE request first to auto-populate this variable."
+			},
+			"response": []
+		},
+		{
+			"name": "Delete Project",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Project was deleted\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('message');",
+							"    pm.expect(jsonData.message).to.include('deleted');",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "x-teacher-key",
+						"value": "{{teacher_key}}",
+						"type": "text",
+						"description": "Teacher authentication required"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/projects/{{test_project_id}}",
+					"host": ["{{base_url}}"],
+					"path": ["api", "projects", "{{test_project_id}}"]
+				},
+				"description": "Delete a project by ID. Requires teacher authentication.\n\n**Note:** Replace `{{test_project_id}}` with an actual project ID, or run the CREATE request first to auto-populate this variable."
+			},
+			"response": []
+		},
+		{
+			"name": "Test Authentication Required (should fail)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 401 Unauthorized\", function () {",
+							"    pm.response.to.have.status(401);",
+							"});",
+							"",
+							"pm.test(\"Error message mentions authentication\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('error');",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"title\": \"This should fail\",\n  \"description\": \"No authentication header provided\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/projects",
+					"host": ["{{base_url}}"],
+					"path": ["api", "projects"]
+				},
+				"description": "This request intentionally lacks the `x-teacher-key` header to test that authentication is properly required. Should return 401 Unauthorized."
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "https://showroom-fullstack-m3-production.up.railway.app",
+			"type": "string"
+		},
+		{
+			"key": "teacher_key",
+			"value": "ironhack2025",
+			"type": "string"
+		},
+		{
+			"key": "test_project_id",
+			"value": "",
+			"type": "string"
+		}
+	]
+}

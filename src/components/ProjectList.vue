@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
+import SkeletonLoader from "./SkeletonLoader.vue";
 
 const openAccordion = ref(null);
 const showOnlyFeatured = ref(true);
@@ -13,6 +14,7 @@ const totalPages = ref(1);
 const totalProjects = ref(0);
 const isLoading = ref(false);
 const hasError = ref(false);
+const errorMessage = ref("");
 
 let searchTimeout = null;
 
@@ -20,6 +22,7 @@ let searchTimeout = null;
 async function loadProjects() {
 	isLoading.value = true;
 	hasError.value = false;
+	errorMessage.value = "";
 	try {
 		// Construir query params
 		const params = new URLSearchParams({
@@ -34,8 +37,29 @@ async function loadProjects() {
 		}
 
 		const response = await fetch(`/api/projects?${params}`);
+
 		if (!response.ok) {
-			throw new Error("Error al cargar los proyectos");
+			// Intentar parsear mensaje de error del backend
+			let errorMsg = "Error loading projects";
+			try {
+				const errorData = await response.json();
+				errorMsg = errorData.error || errorData.message || errorMsg;
+			} catch (e) {
+				// Si no hay JSON, usar mensaje por status code
+				if (response.status === 404) {
+					errorMsg =
+						"Projects not found. The server may be unavailable.";
+				} else if (response.status === 500) {
+					errorMsg =
+						"Server error. Please try again in a few moments.";
+				} else if (response.status === 400) {
+					errorMsg =
+						"Invalid request. Please check your search parameters.";
+				} else {
+					errorMsg = `Error ${response.status}: Unable to load projects`;
+				}
+			}
+			throw new Error(errorMsg);
 		}
 
 		const data = await response.json();
@@ -43,8 +67,10 @@ async function loadProjects() {
 		totalPages.value = data.meta.totalPages;
 		totalProjects.value = data.meta.total;
 	} catch (error) {
-		console.error("Error:", error);
+		console.error("Error loading projects:", error);
 		hasError.value = true;
+		errorMessage.value =
+			error.message || "Failed to load projects. Please try again.";
 	} finally {
 		isLoading.value = false;
 	}
@@ -138,6 +164,7 @@ function goToPage(page) {
 						placeholder="🔍 Search projects by title, description or technology..."
 						class="search-input"
 						:disabled="isLoading"
+						aria-label="Search projects by title, description or technology"
 					/>
 					<button
 						v-if="searchQuery"
@@ -153,8 +180,9 @@ function goToPage(page) {
 				</div>
 
 				<div class="featured-filter">
-					<label class="checkbox-label">
+					<label for="featured-filter" class="checkbox-label">
 						<input
+							id="featured-filter"
 							type="checkbox"
 							v-model="showOnlyFeatured"
 							@change="toggleFeatured"
@@ -167,17 +195,14 @@ function goToPage(page) {
 		</div>
 
 		<!-- Estado de loading -->
-		<div v-if="isLoading" class="loading-state">
-			<div class="spinner"></div>
-			<p>Loading projects...</p>
-		</div>
+		<SkeletonLoader v-if="isLoading" :count="3" />
 
-		<!-- Estado de error -->
-		<div v-else-if="hasError" class="error-state">
-			<p>❌ Error loading projects. Please try again.</p>
-			<button @click="loadProjects" class="retry-btn">Retry</button>
+		<!-- Error State -->
+		<div v-if="hasError" class="error-state">
+			<div class="error-icon">⚠️</div>
+			<p class="error-message">{{ errorMessage }}</p>
+			<button @click="loadProjects" class="retry-btn">🔄 Retry</button>
 		</div>
-
 		<!-- Sin resultados -->
 		<div v-else-if="projects.length === 0" class="no-results">
 			<p>🔍 No projects found</p>
@@ -304,7 +329,7 @@ function goToPage(page) {
 }
 
 .projects-subtitle {
-	color: #666;
+	color: #888;
 	font-size: 0.8em;
 	margin: 0 0 0.4rem 0;
 	font-weight: 500;
@@ -380,8 +405,6 @@ function goToPage(page) {
 	color: #1e1e1e;
 }
 
-
-
 .checkbox-label {
 	display: flex;
 	align-items: center;
@@ -425,7 +448,7 @@ function goToPage(page) {
 .no-results {
 	text-align: center;
 	padding: 3em 2em;
-	color: #666;
+	color: #888;
 }
 
 .spinner {
@@ -447,10 +470,16 @@ function goToPage(page) {
 	}
 }
 
-.error-state p {
+.error-icon {
+	font-size: 3em;
+	margin-bottom: 0.5em;
+}
+
+.error-message {
 	color: #d32f2f;
 	font-weight: 600;
 	margin-bottom: 1em;
+	font-size: 1.1em;
 }
 
 .retry-btn {
@@ -749,7 +778,7 @@ function goToPage(page) {
 
 .page-text {
 	font-size: 0.9em;
-	color: #666;
+	color: #888;
 	font-weight: 500;
 }
 
@@ -775,8 +804,6 @@ function goToPage(page) {
 		font-size: 0.9em;
 		padding: 0.9em 2.5em 0.9em 0.9em;
 	}
-
-	
 
 	.checkbox-label {
 		padding: 0.7rem 1rem;

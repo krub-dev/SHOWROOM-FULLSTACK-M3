@@ -2,11 +2,9 @@
 	<div class="api-projects-container">
 		<div class="content-wrapper">
 			<header class="projects-header">
-				<h1>API Projects Manager</h1>
+				<h1>Dashboard</h1>
 				<div class="code-subtitle">
-					<span class="code-comment"
-						>// CRUD operations with Express API</span
-					>
+					<span class="code-comment">// CRUD with API (Express)</span>
 					<div class="code-line">
 						<span class="code-keyword">const </span>
 						<span class="code-variable">apiUrl </span>
@@ -31,6 +29,7 @@
 						placeholder="Enter teacher access code"
 						@keyup.enter="authenticateTeacher"
 						class="teacher-password-input"
+						aria-label="Teacher access code"
 					/>
 					<button
 						@click="authenticateTeacher"
@@ -387,7 +386,27 @@ export default {
 				const response = await fetch(url);
 
 				if (!response.ok) {
-					throw new Error(`HTTP error! status: ${response.status}`);
+					// Parsear error del backend
+					let errorMsg = "Failed to load projects";
+					try {
+						const errorData = await response.json();
+						errorMsg =
+							errorData.error || errorData.message || errorMsg;
+					} catch (e) {
+						if (response.status === 401) {
+							errorMsg =
+								"Authentication failed. Please check your access code.";
+						} else if (response.status === 404) {
+							errorMsg =
+								"API endpoint not found. Server may be unavailable.";
+						} else if (response.status === 500) {
+							errorMsg =
+								"Server error. Please try again in a few moments.";
+						} else {
+							errorMsg = `Error ${response.status}: Unable to load projects`;
+						}
+					}
+					throw new Error(errorMsg);
 				}
 
 				const result = await response.json();
@@ -401,10 +420,9 @@ export default {
 				}
 			} catch (error) {
 				console.error("Error loading projects:", error);
-				this.showMessage(
-					"Failed to load projects. Check if API server is running.",
-					"error"
-				);
+				if (showMessage) {
+					this.showMessage(error.message, "error");
+				}
 			} finally {
 				this.loading = false;
 			}
@@ -450,7 +468,30 @@ export default {
 				}
 
 				if (!response.ok) {
-					throw new Error(`HTTP error! status: ${response.status}`);
+					// Parsear error detallado del backend
+					let errorMsg = "Failed to save project";
+					try {
+						const errorData = await response.json();
+						errorMsg =
+							errorData.error || errorData.message || errorMsg;
+					} catch (e) {
+						if (response.status === 400) {
+							errorMsg =
+								"Invalid data. Please check all required fields.";
+						} else if (response.status === 401) {
+							errorMsg =
+								"Authentication failed. Please verify your teacher access code.";
+						} else if (response.status === 404) {
+							errorMsg =
+								"Project not found. It may have been deleted.";
+						} else if (response.status === 500) {
+							errorMsg =
+								"Server error. Your changes were not saved. Please try again.";
+						} else {
+							errorMsg = `Error ${response.status}: Unable to save project`;
+						}
+					}
+					throw new Error(errorMsg);
 				}
 
 				const result = await response.json();
@@ -465,8 +506,10 @@ export default {
 				await this.loadProjects(false); // Reload the list silently
 			} catch (error) {
 				console.error("Error saving project:", error);
+				// NO resetear form en caso de error - preservar datos del usuario
 				this.showMessage(
-					"Failed to save project. Please try again.",
+					error.message ||
+						"Failed to save project. Please try again.",
 					"error"
 				);
 			} finally {
@@ -496,7 +539,27 @@ export default {
 				});
 
 				if (!response.ok) {
-					throw new Error(`HTTP error! status: ${response.status}`);
+					// Parsear error del backend
+					let errorMsg = "Failed to delete project";
+					try {
+						const errorData = await response.json();
+						errorMsg =
+							errorData.error || errorData.message || errorMsg;
+					} catch (e) {
+						if (response.status === 401) {
+							errorMsg =
+								"Authentication failed. Please verify your teacher access code.";
+						} else if (response.status === 404) {
+							errorMsg =
+								"Project not found. It may have been already deleted.";
+						} else if (response.status === 500) {
+							errorMsg =
+								"Server error. Project was not deleted. Please try again.";
+						} else {
+							errorMsg = `Error ${response.status}: Unable to delete project`;
+						}
+					}
+					throw new Error(errorMsg);
 				}
 
 				this.showMessage("Project deleted successfully!", "deleted");
@@ -511,7 +574,8 @@ export default {
 			} catch (error) {
 				console.error("Error deleting project:", error);
 				this.showMessage(
-					"Failed to delete project. Please try again.",
+					error.message ||
+						"Failed to delete project. Please try again.",
 					"error"
 				);
 			} finally {
@@ -1151,7 +1215,7 @@ export default {
 }
 
 .project-selector select option:disabled {
-	color: #666;
+	color: #888;
 	font-style: italic;
 }
 
@@ -1304,7 +1368,7 @@ export default {
 
 .no-project-selected {
 	text-align: center;
-	color: #666;
+	color: #888;
 	font-style: italic;
 	padding: 2rem;
 }

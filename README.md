@@ -13,10 +13,10 @@ Professional full-stack web application developed during **Ironhack Web Developm
 
 The showroom includes:
 
--   🏠 **Home** - Landing page with featured projects showcase
--   📋 **Projects** - Complete projects list with featured toggle
--   📞 **Contact** - Professional contact form with LinkedIn integration
--   ⚙️ **API CRUD** - Admin interface for project management
+-   🏠 **Home** (`/`) - Landing page with featured projects showcase
+-   📋 **Projects** (`/projects`) - Complete projects list with search, pagination, and featured filter
+-   📞 **Contact** (`/contact`) - Professional contact form with LinkedIn integration
+-   ⚙️ **Admin Panel** (`/crud`) - Secure CRUD interface with teacher authentication and health check
 -   📱 **Mobile Responsive** - Hamburger menu and mobile-optimized design
 
 ## 📋 **Project Overview**
@@ -54,26 +54,48 @@ It features a full CRUD system, project search/filter by title and technologies,
 
 ---
 
-## 🏗️ **Directory Structure** TBC!
+## 🏗️ **Directory Structure**
 
 ```
-📁 Ironhack_DWEB_M3_W2_LABS/
-├── 🖥️ Frontend (Vue.js)           → http://localhost:5173 | Production: Railway
+📁 SHOWROOM-FULLSTACK-M3/
+├── 🖥️ Frontend (Vue.js)                     → http://localhost:5173 | Production: Railway
 │   ├── src/
 │   │   ├── components/
-│   │   │   ├── Home.vue              # Landing page with responsive design
-│   │   │   ├── ProjectList.vue       # Featured/All projects with mobile accordion
-│   │   │   ├── ApiProjects.vue       # CRUD Manager with production API URLs
-│   │   │   ├── Contact.vue           # Dark theme contact form
-│   │   │   ├── NotFound404.vue       # 404 error page
-│   │   │   └── LinkedInButton.vue    # Professional networking
-│   │   ├── App.vue                   # Main app with hamburger menu
-│   │   ├── data/projects.json        # Enhanced with featured & sequential IDs
-│   │   └── main.js
-│   └── package.json
-└── 🌐 Backend (Express API)        → http://localhost:3001 | Production: Railway
-    ├── server.js                    # Full CRUD REST API + SPA routing
-    └── package.json
+│   │   │   ├── Home.vue                    # Landing page with responsive design
+│   │   │   ├── ProjectList.vue             # Projects list with search, pagination, skeleton loader
+│   │   │   ├── ApiProjects.vue             # CRUD Manager with health check
+│   │   │   ├── Contact.vue                 # Dark theme contact form
+│   │   │   ├── NotFound404.vue             # 404 error page with animations
+│   │   │   ├── LinkedInButton.vue          # Professional networking button
+│   │   │   └── SkeletonLoader.vue          # Loading skeleton with shimmer effect
+│   │   ├── router/
+│   │   │   └── index.js                    # Vue Router configuration (/, /projects, /contact, /crud)
+│   │   ├── assets/
+│   │   │   ├── banner-krub.png             # Profile banner
+│   │   │   ├── banner-showroom.png         # Project banner
+│   │   │   └── krub-logo.png               # Logo image
+│   │   ├── App.vue                         # Main app with hamburger menu navigation
+│   │   ├── main.js                         # Vue app entry point
+│   │   └── style.css                       # Global styles (focus-visible, prefers-reduced-motion)
+│   ├── public/
+│   │   └── krub-logo.png                   # Public assets
+│   ├── index.html                          # HTML entry point
+│   ├── vite.config.js                      # Vite config with /api proxy
+│   └── package.json                        # Frontend dependencies
+├── 🌐 Backend (Express API)                → http://localhost:3001 | Production: Railway
+│   ├── prisma/
+│   │   ├── schema.prisma                   # Database schema (Project model)
+│   │   ├── seed.js                         # Database seeding with 10 projects
+│   │   └── migrations/                     # Migration history (auto-generated)
+│   ├── scripts/
+│   │   └── (utility scripts)               # Helper scripts
+│   ├── server.js                           # Express server with CRUD + SPA routing
+│   ├── .env                                # Local environment variables (gitignored)
+│   ├── .env.example                        # Environment template
+│   └── package.json                        # Backend dependencies
+├── Showroom_API.postman_collection.json    # Postman collection with 8 endpoints + tests
+├── README.md                               # This file
+└── .gitignore                              # Git ignore rules
 ```
 
 ---
@@ -84,12 +106,15 @@ It features a full CRUD system, project search/filter by title and technologies,
 
 -   `App.vue` — Main application shell with responsive hamburger menu navigation.
 -   `Home.vue` — Landing page featuring a professional showroom and elegant design.
--   `ProjectList.vue` — Display all/featured projects (consumes /api/projects).
--   `ApiProjects.vue` — CRUD manager with teacher authentication and health check button.
+-   `ProjectList.vue` — Display all/featured projects with search, pagination, error handling, and skeleton loader.
+-   `ApiProjects.vue` — CRUD manager with teacher authentication, health check button, and comprehensive error handling.
+-   `SkeletonLoader.vue` — Reusable loading skeleton component with shimmer animation effect.
 -   `Contact.vue` — Dark theme contact form with LinkedIn integration.
--   `NotFound404.vue` — Custom 404 error page.
+-   `NotFound404.vue` — Custom 404 error page with animated elements.
 -   `LinkedInButton.vue` — Reusable LinkedIn networking component.
--   `vite.config.js` — Dev server proxy: /api → http://localhost:3001 for seamless local development.
+-   `router/index.js` — Vue Router configuration with routes: `/`, `/projects`, `/contact`, `/crud`, and 404 fallback.
+-   `style.css` — Global styles including focus-visible states and prefers-reduced-motion support.
+-   `vite.config.js` — Dev server proxy: `/api` → `http://localhost:3001` for seamless local development.
 
 ### Backend Structure
 
@@ -184,7 +209,7 @@ cd api-projects
 npx prisma generate
 
 # Apply migrations (creates Project table)
-npx prisma migrate deploy
+npx prisma migrate dev
 
 # Seed database with 10 sample projects
 npm run seed
@@ -368,28 +393,130 @@ x-teacher-key: <your-teacher-password>
 -   CRUD admin interface
 -   Search by title/technologies (tags clickable/filterable)
 -   Pagination controls (next/prev, page size)
--   Error/loading/success states (skeletons optional)
--   Dark theme, responsive, animations
+-   **Error/loading/success states** with skeleton loaders
+-   **Robust error handling** (see Error Handling section below)
+-   Dark theme, responsive, animations with `prefers-reduced-motion`
 -   Button to test backend/db connection (`/api/health`)
 -   Professional contact form
+-   **Accessibility features**: ARIA labels, focus-visible, WCAG 2.0 AA contrast
 
 ### Backend
 
--   RESTful API (Express.js, to be migrated to DB soon)
--   File-based storage (migrating to SQL DB)
--   Featured projects, sequential IDs
--   Teacher authentication (admin key for write ops)
--   Error handling, validation (title required)
--   Health check endpoint
--   Planned: seeds, migrations
+-   RESTful API (Express.js with PostgreSQL + Prisma ORM)
+-   Database persistence with migrations and seeding
+-   Featured projects system
+-   Teacher authentication (admin key for write operations)
+-   **Comprehensive error handling** with specific HTTP status codes
+-   Input validation (title required, rating 1-5, etc.)
+-   Health check endpoint (`/api/health`)
+-   Search with case-insensitive PostgreSQL queries
+-   Server-side pagination with metadata
+
+---
+
+## 🛡️ **Error Handling**
+
+The application implements comprehensive error handling as required, with **clear and recoverable error messages** for different HTTP status codes:
+
+### **HTTP Status Codes Handled:**
+
+| Status  | Scenario              | User Message                                                            | Recovery Action                            |
+| ------- | --------------------- | ----------------------------------------------------------------------- | ------------------------------------------ |
+| **400** | Invalid request data  | "Invalid data. Please check all required fields."                       | Form preserved, user can correct and retry |
+| **401** | Authentication failed | "Authentication failed. Please verify your teacher access code."        | User can re-enter correct password         |
+| **404** | Resource not found    | "Not found. Server may be unavailable / Project may have been deleted." | Retry button available                     |
+| **500** | Server error          | "Server error. Please try again in a few moments."                      | Retry button available                     |
+
+### **Error Handling Features:**
+
+**ProjectList.vue (Public view):**
+
+-   ⚠️ Large error icon with descriptive message
+-   🔄 **Retry button** to attempt loading again
+-   Preserves search query and filter state
+-   Graceful degradation when backend is unavailable
+
+**ApiProjects.vue (Admin panel):**
+
+-   **Form data preserved** on error (no data loss)
+-   Specific error messages for create/update/delete operations
+-   Visual feedback with color-coded alerts
+-   Prevents accidental data loss
+
+**Backend error responses:**
+
+-   Structured JSON error messages
+-   Appropriate HTTP status codes
+-   Detailed error information in development mode
+-   Sanitized error messages in production
+
+### **Testing Error Scenarios:**
+
+```bash
+# Test 500 - Backend unavailable
+pkill -f "node.*server.js"
+# Visit http://localhost:5173 → See error message + retry button
+
+# Test 401 - Wrong authentication
+# Go to /crud → Enter wrong password → See auth error
+
+# Test 404 - Non-existent project
+curl http://localhost:3001/api/projects/99999
+
+# Test 400 - Invalid data
+curl -X POST http://localhost:3001/api/projects \
+  -H "Content-Type: application/json" \
+  -H "x-teacher-key: ironhack2025" \
+  -d '{"description":"Missing title"}'
+```
 
 ---
 
 ## 🧪 **Testing**
 
--   Test of CRUD endpoints (Jest/Supertest **or** Postman collection)
--   Scripts and instructions in README
--   Planned: Seed script for test/demo data
+### **Postman Collection**
+
+A complete Postman collection is included: **`Showroom_API.postman_collection.json`**
+
+**Features:**
+
+-   ✅ All CRUD endpoints (GET, POST, PUT, DELETE)
+-   ✅ Health check endpoint
+-   ✅ Search and pagination examples
+-   ✅ Featured filter example
+-   ✅ Automated test scripts for each request
+-   ✅ Pre-configured environment variables
+-   ✅ Authentication headers setup
+
+**Endpoints included:**
+
+1. **Health Check** - Verify API and database connection
+2. **Get All Projects** - With pagination support
+3. **Search Projects** - By title, description, or technology
+4. **Get Featured Projects** - Filter by featured status
+5. **Create Project** - POST with authentication
+6. **Update Project** - PUT with authentication
+7. **Delete Project** - DELETE with authentication
+8. **Test Auth Required** - Negative test (should fail without auth)
+
+**How to use:**
+
+1. Import `Showroom_API.postman_collection.json` to Postman
+2. Collection variables are pre-configured:
+    - `base_url`: Railway production URL (change to `http://localhost:3001` for local)
+    - `teacher_key`: `ironhack2025`
+3. Run individual requests or use Postman's Collection Runner
+4. All requests include automated tests that verify responses
+
+**Running tests:**
+
+```bash
+# Install Newman (Postman CLI) - optional
+npm install -g newman
+
+# Run collection from command line
+newman run Showroom_API.postman_collection.json
+```
 
 ---
 
@@ -469,7 +596,8 @@ _You can choose and describe one advanced feature for interview-level demonstrat
 -   ✅ **Data Validation** - Title required on POST/PUT; schema-level constraints
 -   ✅ **Graceful Shutdown** - Proper Prisma client disconnection on server stop
 -   ✅ **Independent Environments** - Local and production databases are completely separate
--   🔍 **Search & Pagination** - (Planned) Efficient queries with Prisma filters
+-   ✅ **Search & Pagination** - Case-insensitive PostgreSQL queries with server-side pagination (6 items per page)
+-   ✅ **Skeleton Loader** - Shimmer loading effect during data fetching for improved UX
 
 ### **Advanced Features:**
 
@@ -492,8 +620,8 @@ _You can choose and describe one advanced feature for interview-level demonstrat
 ---
 
 **Ironhack Web Development Bootcamp** - Module 3 Final Project  
-**Deadline:** 6 October 2025  
-**Status:** 🚧 In Progress
+**Completed:** 4 October 2025  
+**Status:** ✅ Production Ready & Deployed
 
 ---
 
