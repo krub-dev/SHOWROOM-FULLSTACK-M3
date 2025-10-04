@@ -326,8 +326,13 @@ npm run seed
 **5. Verify Deployment:**
 
 ```bash
-curl https://your-app.up.railway.app/api/health
-curl https://your-app.up.railway.app/api/projects
+# Test your deployment (example using the original project URL)
+curl https://showroom-fullstack-m3-production.up.railway.app/api/health
+curl https://showroom-fullstack-m3-production.up.railway.app/api/projects
+
+# Replace with your actual Railway URL:
+# curl https://your-project-name.up.railway.app/api/health
+# curl https://your-project-name.up.railway.app/api/projects
 ```
 
 ### **Build Configuration:**
@@ -612,14 +617,14 @@ SEO:              83/100  ✅
 
 ---
 
-## 💡 **Prueba tipo entrevista (README section)**
+## 💡 **Advanced Features (Interview-Level Demonstration)**
 
-_You can choose and describe one advanced feature for interview-level demonstration:_
+_Optional advanced implementations to showcase technical expertise:_
 
--   **Login + rutas protegidas:** Implement authentication with JWT, profile & logout.
--   **Optimistic UI + reintentos:** UI updates before response, rollback & retry on error.
--   **Ordenación y filtros avanzados:** Sorting by createdAt/title, filtering by tags.
--   **Accesibilidad rápida:** Focus management, aria-live, audit with Lighthouse.
+-   **Login + Protected Routes:** Implement authentication with JWT, user profile & logout functionality.
+-   **Optimistic UI + Retry Logic:** UI updates before server response, with rollback & exponential retry on error.
+-   **Advanced Sorting & Filtering:** Sort by createdAt/title/rating, filter by multiple tags simultaneously.
+-   **Enhanced Accessibility:** Focus management, aria-live regions, Lighthouse audit optimization (≥95 score).
 
 ---
 
