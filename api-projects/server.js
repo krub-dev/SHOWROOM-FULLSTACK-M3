@@ -20,8 +20,10 @@ const corsOptions = {
 app.use(cors(corsOptions)); // Configuración de CORS para desarrollo y producción
 app.use(express.json()); // Parsea JSON requests (como @RequestBody)
 
-// Teacher authentication middleware
-const TEACHER_PASSWORD = process.env.TEACHER_PASSWORD || "ironhack2025";
+// API Key Authentication Middleware
+// NOTE: The fallback "ironhack2025" is for local development/demo purposes only.
+// Production (Railway) uses a secure password from environment variables (ADMIN_PASSWORD).
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "ironhack2025";
 
 app.use("/api/projects", (req, res, next) => {
 	// Allow GET requests (read-only) without authentication
@@ -29,12 +31,12 @@ app.use("/api/projects", (req, res, next) => {
 		return next();
 	}
 
-	// For POST, PUT, DELETE - require teacher password
-	const teacherKey = req.headers["x-teacher-key"];
-	if (teacherKey !== TEACHER_PASSWORD) {
+	// For POST, PUT, DELETE - require admin password
+	const adminKey = req.headers["x-admin-key"];
+	if (adminKey !== ADMIN_PASSWORD) {
 		return res.status(401).json({
-			error: "CRUD operations require teacher authentication",
-			message: "Please provide teacher access code in frontend",
+			error: "CRUD operations require admin authentication",
+			message: "Please provide admin access code in frontend",
 		});
 	}
 

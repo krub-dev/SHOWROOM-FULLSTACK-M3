@@ -31,7 +31,7 @@ const BASE_URL = 'http://localhost:3001';
 // Test Suite
 describe('Showroom API - CRUD Integration Tests', () => {
 	let testProjectId;
-	const TEACHER_KEY = process.env.TEACHER_KEY || 'ironhack2025';
+	const ADMIN_KEY = process.env.ADMIN_PASSWORD || 'ironhack2025';
 	
 	// Setup: Reset autoincrement sequence before all tests
 	beforeAll(async () => {
@@ -142,7 +142,7 @@ describe('Showroom API - CRUD Integration Tests', () => {
 			
 			const response = await request(BASE_URL)
 				.post('/api/projects')
-				.set('x-teacher-key', TEACHER_KEY)
+				.set('x-admin-key', ADMIN_KEY)
 				.send(newProject);
 			
 			expect(response.status).toBe(201);
@@ -173,7 +173,7 @@ describe('Showroom API - CRUD Integration Tests', () => {
 			
 			const response = await request(BASE_URL)
 				.put(`/api/projects/${testProjectId}`)
-				.set('x-teacher-key', TEACHER_KEY)
+				.set('x-admin-key', ADMIN_KEY)
 				.send(updatedData);
 			
 			expect(response.status).toBe(200);
@@ -190,7 +190,7 @@ describe('Showroom API - CRUD Integration Tests', () => {
 			
 			const response = await request(BASE_URL)
 				.delete(`/api/projects/${testProjectId}`)
-				.set('x-teacher-key', TEACHER_KEY);
+				.set('x-admin-key', ADMIN_KEY);
 			
 			expect(response.status).toBe(200);
 			expect(response.body).toHaveProperty('message');
@@ -248,7 +248,7 @@ describe('Showroom API - CRUD Integration Tests', () => {
 			
 			const response = await request(BASE_URL)
 				.post('/api/projects')
-				.set('x-teacher-key', TEACHER_KEY)
+				.set('x-admin-key', ADMIN_KEY)
 				.send(invalidProject);
 			
 			expect(response.status).toBe(400);
@@ -268,7 +268,7 @@ describe('Showroom API - CRUD Integration Tests', () => {
 		it('should return 404 for non-existent project', async () => {
 			const response = await request(BASE_URL)
 				.put('/api/projects/999999')
-				.set('x-teacher-key', TEACHER_KEY)
+				.set('x-admin-key', ADMIN_KEY)
 				.send({ title: 'Non-existent' });
 			
 			expect(response.status).toBe(404);
@@ -287,7 +287,7 @@ describe('Showroom API - CRUD Integration Tests', () => {
 		it('should return 404 when deleting non-existent project', async () => {
 			const response = await request(BASE_URL)
 				.delete('/api/projects/999999')
-				.set('x-teacher-key', TEACHER_KEY);
+				.set('x-admin-key', ADMIN_KEY);
 			
 			expect(response.status).toBe(404);
 			expect(response.body).toHaveProperty('error');

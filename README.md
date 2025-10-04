@@ -16,7 +16,7 @@ The showroom includes:
 -   🏠 **Home** (`/`) - Landing page with featured projects showcase
 -   📋 **Projects** (`/projects`) - Complete projects list with search, pagination, and featured filter
 -   📞 **Contact** (`/contact`) - Professional contact form with LinkedIn integration
--   ⚙️ **Admin Panel** (`/crud`) - Secure CRUD interface with teacher authentication and health check
+-   ⚙️ **Admin Panel** (`/crud`) - Secure CRUD interface with API Key Authentication and health check
 -   📱 **Mobile Responsive** - Hamburger menu and mobile-optimized design
 
 ## 📋 **Project Overview**
@@ -30,7 +30,7 @@ It features a full CRUD system, project search/filter by title and technologies,
 
 -   Full stack (Vue.js + Express.js)
 -   Projects CRUD: create, view, edit, delete
--   Secure admin actions (teacher key authentication)
+-   Secure admin actions (API Key Authentication)
 -   Featured projects system
 -   List, detail, and admin forms
 -   Search/filter by title and technologies (tags)
@@ -110,7 +110,7 @@ It features a full CRUD system, project search/filter by title and technologies,
 -   `App.vue` — Main application shell with responsive hamburger menu navigation.
 -   `Home.vue` — Landing page featuring a professional showroom and elegant design.
 -   `ProjectList.vue` — Display all/featured projects with search, pagination, error handling, and skeleton loader.
--   `ApiProjects.vue` — CRUD manager with teacher authentication, health check button, and comprehensive error handling.
+-   `ApiProjects.vue` — CRUD manager with API Key Authentication, health check button, and comprehensive error handling.
 -   `SkeletonLoader.vue` — Reusable loading skeleton component with shimmer animation effect.
 -   `Contact.vue` — Dark theme contact form with LinkedIn integration.
 -   `NotFound404.vue` — Custom 404 error page with animated elements.
@@ -128,7 +128,7 @@ It features a full CRUD system, project search/filter by title and technologies,
 -   `.env` — Local environment variables (DATABASE_URL, PORT, etc.)
 -   `.env.example` — Template for environment configuration.
 -   Data operations: Prisma ORM with PostgreSQL, full ACID compliance.
--   Authentication: Teacher key middleware for write operations.
+-   Authentication: API Key Authentication middleware for write operations.
 -   CORS: Production-ready configuration.
 -   Static file serving and SPA fallback.
 -   Error handling and logging.
@@ -296,7 +296,7 @@ Add these environment variables in Railway:
 ```bash
 DATABASE_URL=<provided by Railway PostgreSQL service>
 NODE_ENV=production
-TEACHER_PASSWORD=<your-secure-password>
+ADMIN_PASSWORD=<your-secure-password>
 ```
 
 **3. Set Start Command:**
@@ -334,6 +334,7 @@ This project implements **automatic continuous deployment** via Railway:
 -   ✅ **Database Migrations:** Prisma migrations run automatically on each deployment via start command
 
 **Deployment Workflow:**
+
 ```bash
 git push origin main  →  Railway detects push  →  Builds project  →  Runs migrations  →  Deploys to production
 ```
@@ -365,9 +366,9 @@ curl https://showroom-fullstack-m3-production.up.railway.app/api/projects
 | ------ | --------------------------------------- | ----------------------------- | ------------- | --------------------------- |
 | GET    | `/api/projects`                         | Get all projects              | No            | Supports search, pagination |
 | GET    | `/api/projects?search=&page=&pageSize=` | List with search & pagination | No            | Filters by title/tags       |
-| POST   | `/api/projects`                         | Create new project            | Yes           | x-teacher-key header        |
-| PUT    | `/api/projects/:id`                     | Update project                | Yes           | x-teacher-key header        |
-| DELETE | `/api/projects/:id`                     | Delete project                | Yes           | x-teacher-key header        |
+| POST   | `/api/projects`                         | Create new project            | Yes           | x-admin-key header        |
+| PUT    | `/api/projects/:id`                     | Update project                | Yes           | x-admin-key header        |
+| DELETE | `/api/projects/:id`                     | Delete project                | Yes           | x-admin-key header        |
 | GET    | `/api/health`                           | Health check                  | No            | DB/API connection test      |
 
 **Request Body Schema (POST/PUT):**
@@ -404,7 +405,7 @@ curl https://showroom-fullstack-m3-production.up.railway.app/api/projects
 **Authentication Header (for POST/PUT/DELETE):**
 
 ```bash
-x-teacher-key: <your-teacher-password>
+x-admin-key: <your-admin-password>
 ```
 
 ## 🔍 **Features**
@@ -428,7 +429,7 @@ x-teacher-key: <your-teacher-password>
 -   RESTful API (Express.js with PostgreSQL + Prisma ORM)
 -   Database persistence with migrations and seeding
 -   Featured projects system
--   Teacher authentication (admin key for write operations)
+-   API Key Authentication (admin key for write operations)
 -   **Comprehensive error handling** with specific HTTP status codes
 -   Input validation (title required, rating 1-5, etc.)
 -   Health check endpoint (`/api/health`)
@@ -446,7 +447,7 @@ The application implements comprehensive error handling as required, with **clea
 | Status  | Scenario              | User Message                                                            | Recovery Action                            |
 | ------- | --------------------- | ----------------------------------------------------------------------- | ------------------------------------------ |
 | **400** | Invalid request data  | "Invalid data. Please check all required fields."                       | Form preserved, user can correct and retry |
-| **401** | Authentication failed | "Authentication failed. Please verify your teacher access code."        | User can re-enter correct password         |
+| **401** | Authentication failed | "Authentication failed. Please verify your admin access code."        | User can re-enter correct password         |
 | **404** | Resource not found    | "Not found. Server may be unavailable / Project may have been deleted." | Retry button available                     |
 | **500** | Server error          | "Server error. Please try again in a few moments."                      | Retry button available                     |
 
@@ -489,7 +490,7 @@ curl http://localhost:3001/api/projects/99999
 # Test 400 - Invalid data
 curl -X POST http://localhost:3001/api/projects \
   -H "Content-Type: application/json" \
-  -H "x-teacher-key: ironhack2025" \
+  -H "x-admin-key: ironhack2025" \
   -d '{"description":"Missing title"}'
 ```
 
@@ -527,7 +528,7 @@ A complete Postman collection is included: **`Showroom_API.postman_collection.js
 1. Import `Showroom_API.postman_collection.json` to Postman
 2. Collection variables are pre-configured:
     - `base_url`: Railway production URL (change to `http://localhost:3001` for local)
-    - `teacher_key`: `ironhack2025`
+    - `admin_key`: `ironhack2025`
 3. Run individual requests or use Postman's Collection Runner
 4. All requests include automated tests that verify responses
 
@@ -695,7 +696,7 @@ _Optional advanced implementations to showcase technical expertise:_
 -   ✅ **CI/CD Pipeline** - Automatic deployment on every push to main branch via Railway
 -   ✅ **Database Seeding** - Pre-populated with 10 sample projects
 -   ✅ **Prisma Studio** - Visual database management tool
--   ✅ **Teacher Authentication Middleware** - All write operations protected by teacher key (x-teacher-key header)
+-   ✅ **API Key Authentication** - All write operations protected by API key (x-admin-key header)
 -   ✅ **Health Check Endpoint** - `/api/health` returns database connection status
 -   ✅ **Data Validation** - Title required on POST/PUT; schema-level constraints
 -   ✅ **Graceful Shutdown** - Proper Prisma client disconnection on server stop

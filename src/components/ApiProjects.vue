@@ -15,26 +15,26 @@
 				</div>
 			</header>
 
-			<!-- Teacher Authentication Panel -->
-			<div v-if="!teacherAuthenticated" class="teacher-auth-panel">
-				<h3>Teacher Access Required</h3>
+			<!-- Admin Authentication Panel -->
+			<div v-if="!adminAuthenticated" class="admin-auth-panel">
+				<h3>Admin Access Required</h3>
 				<p>
 					To test CRUD operations (Create, Update, Delete), please
-					enter the teacher access code:
+					enter the admin access code:
 				</p>
 				<div class="auth-input-group">
 					<input
 						type="password"
-						v-model="teacherPassword"
-						placeholder="Enter teacher access code"
-						@keyup.enter="authenticateTeacher"
-						class="teacher-password-input"
-						aria-label="Teacher access code"
+						v-model="adminPassword"
+						placeholder="Enter admin access code"
+						@keyup.enter="authenticateAdmin"
+						class="admin-password-input"
+						aria-label="Admin access code"
 					/>
 					<button
-						@click="authenticateTeacher"
+						@click="authenticateAdmin"
 						class="auth-btn"
-						:disabled="!teacherPassword"
+						:disabled="!adminPassword"
 					>
 						🔓 Enable CRUD
 					</button>
@@ -47,7 +47,7 @@
 			</div>
 
 			<!-- Control Panel -->
-			<div v-if="teacherAuthenticated" class="control-panel">
+			<div v-if="adminAuthenticated" class="control-panel">
 				<div class="panel-header">
 					<div class="project-selector">
 						<select
@@ -109,7 +109,7 @@
 
 			<!-- Project Details (when selected) -->
 			<div
-				v-if="selectedProject && teacherAuthenticated"
+				v-if="selectedProject && adminAuthenticated"
 				class="project-details"
 			>
 				<h3>{{ selectedProject.title }}</h3>
@@ -154,7 +154,7 @@
 
 			<!-- Formulario para crear/editar (hidden by default) -->
 			<form
-				v-if="showForm && teacherAuthenticated"
+				v-if="showForm && adminAuthenticated"
 				class="project-form"
 				@submit.prevent="saveProject"
 			>
@@ -302,9 +302,9 @@ export default {
 			selectedProjectId: "CREATE_NEW", // Default to Create New Project
 			selectedProject: null,
 			showForm: false, // Cambia a false para que el formulario no se muestre antes de autenticarse
-			// Teacher authentication
-			teacherAuthenticated: false,
-			teacherPassword: "",
+			// Admin authentication
+			adminAuthenticated: false,
+			adminPassword: "",
 			healthStatus: "",
 			checking: false,
 			healthStatusClass: "",
@@ -317,7 +317,7 @@ export default {
 		},
 	},
 	async mounted() {
-		// Projects will only load after teacher authentication
+		// Projects will only load after admin authentication
 		// No automatic loading to protect data access
 	},
 
@@ -346,17 +346,20 @@ export default {
 			}
 		},
 		// Jarko authentication
-		async authenticateTeacher() {
-			if (!this.teacherPassword) {
+		async authenticateAdmin() {
+			if (!this.adminPassword) {
 				this.showMessage(
 					"Please enter custom Jarko access code",
 					"error"
 				);
 				return;
 			}
+			// NOTE: This frontend validation is for UX purposes only (provides immediate feedback).
+			// Real security is enforced by the backend API which validates the x-admin-key header.
+			// In production, Railway uses environment variables for the actual password.
 			const CORRECT_PASSWORD = "ironhack2025";
-			if (this.teacherPassword === CORRECT_PASSWORD) {
-				this.teacherAuthenticated = true;
+			if (this.adminPassword === CORRECT_PASSWORD) {
+				this.adminAuthenticated = true;
 				this.showMessage(
 					"Access granted! You can now use all CRUD operations.",
 					"success"
@@ -369,10 +372,10 @@ export default {
 				this.resetForm();
 			} else {
 				this.showMessage(
-					"Invalid teacher access code. Please try again.",
+					"Invalid admin access code. Please try again.",
 					"error"
 				);
-				this.teacherPassword = "";
+				this.adminPassword = "";
 			}
 		},
 
@@ -451,7 +454,7 @@ export default {
 						method: "PUT",
 						headers: {
 							"Content-Type": "application/json",
-							"x-teacher-key": this.teacherPassword,
+							"x-admin-key": this.adminPassword,
 						},
 						body: JSON.stringify(projectData),
 					});
@@ -461,7 +464,7 @@ export default {
 						method: "POST",
 						headers: {
 							"Content-Type": "application/json",
-							"x-teacher-key": this.teacherPassword,
+							"x-admin-key": this.adminPassword,
 						},
 						body: JSON.stringify(projectData),
 					});
@@ -480,7 +483,7 @@ export default {
 								"Invalid data. Please check all required fields.";
 						} else if (response.status === 401) {
 							errorMsg =
-								"Authentication failed. Please verify your teacher access code.";
+								"Authentication failed. Please verify your admin access code.";
 						} else if (response.status === 404) {
 							errorMsg =
 								"Project not found. It may have been deleted.";
@@ -534,7 +537,7 @@ export default {
 				const response = await fetch(`${this.apiUrl}/${id}`, {
 					method: "DELETE",
 					headers: {
-						"x-teacher-key": this.teacherPassword,
+						"x-admin-key": this.adminPassword,
 					},
 				});
 
@@ -548,7 +551,7 @@ export default {
 					} catch (e) {
 						if (response.status === 401) {
 							errorMsg =
-								"Authentication failed. Please verify your teacher access code.";
+								"Authentication failed. Please verify your admin access code.";
 						} else if (response.status === 404) {
 							errorMsg =
 								"Project not found. It may have been already deleted.";
@@ -1373,8 +1376,8 @@ export default {
 	padding: 2rem;
 }
 
-/* Teacher Authentication Styles */
-.teacher-auth-panel {
+/* Admin Authentication Styles */
+.admin-auth-panel {
 	background: rgba(245, 202, 28, 0.1);
 	border: 2px solid #f5ca1c;
 	border-radius: 8px;
@@ -1386,12 +1389,12 @@ export default {
 	margin-right: auto;
 }
 
-.teacher-auth-panel h3 {
+.admin-auth-panel h3 {
 	color: #f5ca1c;
 	margin-bottom: 1rem;
 }
 
-.teacher-auth-panel p {
+.admin-auth-panel p {
 	color: #ccc;
 	margin-bottom: 1.5rem;
 }
@@ -1405,7 +1408,7 @@ export default {
 }
 
 @media (max-width: 600px) {
-	.teacher-auth-panel {
+	.admin-auth-panel {
 		padding: 1rem;
 		max-width: 98vw;
 	}
@@ -1414,7 +1417,7 @@ export default {
 		gap: 0.5rem;
 		align-items: stretch;
 	}
-	.teacher-password-input {
+	.admin-password-input {
 		min-width: 0;
 		width: 100%;
 		font-size: 1rem;
@@ -1427,7 +1430,7 @@ export default {
 	}
 }
 
-.teacher-password-input {
+.admin-password-input {
 	background: #2d2d2d;
 	border: 2px solid #f5ca1c;
 	border-radius: 6px;
@@ -1437,7 +1440,7 @@ export default {
 	min-width: 250px;
 }
 
-.teacher-password-input:focus {
+.admin-password-input:focus {
 	outline: none;
 	border-color: #f5ca1c;
 	box-shadow: 0 0 0 2px rgba(245, 202, 28, 0.2);
