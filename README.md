@@ -323,6 +323,21 @@ export DATABASE_URL="<your-railway-database-url>"
 npm run seed
 ```
 
+### **🔄 Continuous Integration & Deployment (CI/CD):**
+
+This project implements **automatic continuous deployment** via Railway:
+
+-   ✅ **Automatic Deployment:** Every push to `main` branch triggers automatic deployment
+-   ✅ **Build Verification:** Railway automatically runs build process and validates before deploying
+-   ✅ **Zero-Downtime:** New versions are deployed without service interruption
+-   ✅ **Instant Rollback:** Previous deployments can be restored instantly if needed
+-   ✅ **Database Migrations:** Prisma migrations run automatically on each deployment via start command
+
+**Deployment Workflow:**
+```bash
+git push origin main  →  Railway detects push  →  Builds project  →  Runs migrations  →  Deploys to production
+```
+
 **5. Verify Deployment:**
 
 ```bash
@@ -677,6 +692,7 @@ _Optional advanced implementations to showcase technical expertise:_
 -   ✅ **Express Middleware** - Static file serving, JSON parsing, request validation
 -   ✅ **Auto-incremental IDs** - Database-managed primary keys
 -   ✅ **Railway Integration** - Production-ready deployment with managed PostgreSQL
+-   ✅ **CI/CD Pipeline** - Automatic deployment on every push to main branch via Railway
 -   ✅ **Database Seeding** - Pre-populated with 10 sample projects
 -   ✅ **Prisma Studio** - Visual database management tool
 -   ✅ **Teacher Authentication Middleware** - All write operations protected by teacher key (x-teacher-key header)
