@@ -33,14 +33,33 @@ describe('Showroom API - CRUD Integration Tests', () => {
 	let testProjectId;
 	const TEACHER_KEY = process.env.TEACHER_KEY || 'ironhack2025';
 	
+	// Setup: Reset autoincrement sequence before all tests
+	beforeAll(async () => {
+		// Get the maximum ID currently in the database
+		const maxProject = await prisma.project.findFirst({
+			orderBy: { id: 'desc' },
+			select: { id: true }
+		});
+		
+		if (maxProject) {
+			// Reset the sequence to start from max_id + 1
+			await prisma.$executeRawUnsafe(
+				`SELECT setval(pg_get_serial_sequence('"Project"', 'id'), ${maxProject.id}, true);`
+			);
+			console.log(`🔄 Reset ID sequence to start from ${maxProject.id + 1}`);
+		}
+	});
+	
 	// Cleanup: Delete test projects after all tests
 	afterAll(async () => {
-		// Clean up any test projects created during testing
+		// Clean up any remaining test projects
 		await prisma.project.deleteMany({
 			where: {
-				title: {
-					contains: 'Test Project - Integration'
-				}
+				OR: [
+					{ title: { contains: 'Test Project - Integration' } },
+					{ title: { contains: 'Test Project Without Auth' } },
+					{ title: { contains: 'Test Project Invalid Auth' } }
+				]
 			}
 		});
 		await prisma.$disconnect();
@@ -105,9 +124,11 @@ describe('Showroom API - CRUD Integration Tests', () => {
 	});
 	
 	// ===============================
-	// CREATE OPERATION (POST)
+	// CRUD LIFECYCLE TESTS (in order: CREATE → UPDATE → DELETE)
+	// These tests must run in sequence to maintain test data consistency
 	// ===============================
-	describe('POST /api/projects', () => {
+	describe('CRUD Lifecycle (CREATE → UPDATE → DELETE)', () => {
+		// Step 1: CREATE
 		it('should create a new project with valid authentication', async () => {
 			const newProject = {
 				title: 'Test Project - Integration Test',
@@ -129,11 +150,67 @@ describe('Showroom API - CRUD Integration Tests', () => {
 			expect(response.body.title).toBe(newProject.title);
 			expect(response.body.description).toBe(newProject.description);
 			expect(response.body.rating).toBe(newProject.rating);
+			expect(response.body.technologies).toEqual(newProject.technologies);
 			
 			// Save project ID for subsequent tests
 			testProjectId = response.body.id;
+			console.log(`✅ Created test project with ID: ${testProjectId}`);
 		});
 		
+		// Step 2: UPDATE (uses the ID from CREATE)
+		it('should update the created project with valid authentication', async () => {
+			expect(testProjectId).toBeDefined(); // Ensure CREATE succeeded
+			
+			const updatedData = {
+				title: 'Test Project - Integration Test UPDATED',
+				description: 'This project has been updated during testing',
+				image: 'https://via.placeholder.com/800x400?text=Updated',
+				technologies: ['Jest', 'Supertest', 'Node.js', 'Express', 'PostgreSQL'],
+				rating: 4,
+				repo: 'https://github.com/test/project-updated',
+				featured: true
+			};
+			
+			const response = await request(BASE_URL)
+				.put(`/api/projects/${testProjectId}`)
+				.set('x-teacher-key', TEACHER_KEY)
+				.send(updatedData);
+			
+			expect(response.status).toBe(200);
+			expect(response.body.title).toBe(updatedData.title);
+			expect(response.body.description).toBe(updatedData.description);
+			expect(response.body.featured).toBe(true);
+			expect(response.body.rating).toBe(4);
+			console.log(`✅ Updated test project ID: ${testProjectId}`);
+		});
+		
+		// Step 3: DELETE (cleans up the test data)
+		it('should delete the created project with valid authentication', async () => {
+			expect(testProjectId).toBeDefined(); // Ensure CREATE succeeded
+			
+			const response = await request(BASE_URL)
+				.delete(`/api/projects/${testProjectId}`)
+				.set('x-teacher-key', TEACHER_KEY);
+			
+			expect(response.status).toBe(200);
+			expect(response.body).toHaveProperty('message');
+			expect(response.body.message).toContain('deleted');
+			
+			// Verify project no longer exists
+			const getResponse = await request(BASE_URL)
+				.get('/api/projects')
+				.query({ search: 'Test Project - Integration Test' });
+			
+			const deletedProject = getResponse.body.data.find(p => p.id === testProjectId);
+			expect(deletedProject).toBeUndefined();
+			console.log(`✅ Deleted test project ID: ${testProjectId}`);
+		});
+	});
+	
+	// ===============================
+	// AUTHENTICATION & VALIDATION TESTS
+	// ===============================
+	describe('POST /api/projects - Authentication & Validation', () => {
 		it('should return 401 without authentication', async () => {
 			const newProject = {
 				title: 'Test Project Without Auth',
@@ -179,35 +256,10 @@ describe('Showroom API - CRUD Integration Tests', () => {
 		});
 	});
 	
-	// ===============================
-	// UPDATE OPERATION (PUT)
-	// ===============================
-	describe('PUT /api/projects/:id', () => {
-		it('should update an existing project with valid authentication', async () => {
-			const updatedData = {
-				title: 'Test Project - Integration Test UPDATED',
-				description: 'This project has been updated during testing',
-				image: 'https://via.placeholder.com/800x400?text=Updated',
-				technologies: ['Jest', 'Supertest', 'Node.js', 'Express', 'PostgreSQL'],
-				rating: 4,
-				repo: 'https://github.com/test/project-updated',
-				featured: true
-			};
-			
-			const response = await request(BASE_URL)
-				.put(`/api/projects/${testProjectId}`)
-				.set('x-teacher-key', TEACHER_KEY)
-				.send(updatedData);
-			
-			expect(response.status).toBe(200);
-			expect(response.body.title).toBe(updatedData.title);
-			expect(response.body.description).toBe(updatedData.description);
-			expect(response.body.featured).toBe(true);
-		});
-		
+	describe('PUT /api/projects/:id - Authentication & Validation', () => {
 		it('should return 401 without authentication', async () => {
 			const response = await request(BASE_URL)
-				.put(`/api/projects/${testProjectId}`)
+				.put('/api/projects/1')
 				.send({ title: 'Should fail' });
 			
 			expect(response.status).toBe(401);
@@ -215,7 +267,7 @@ describe('Showroom API - CRUD Integration Tests', () => {
 		
 		it('should return 404 for non-existent project', async () => {
 			const response = await request(BASE_URL)
-				.put('/api/projects/99999')
+				.put('/api/projects/999999')
 				.set('x-teacher-key', TEACHER_KEY)
 				.send({ title: 'Non-existent' });
 			
@@ -224,42 +276,21 @@ describe('Showroom API - CRUD Integration Tests', () => {
 		});
 	});
 	
-	// ===============================
-	// DELETE OPERATION (DELETE)
-	// ===============================
-	describe('DELETE /api/projects/:id', () => {
+	describe('DELETE /api/projects/:id - Authentication & Validation', () => {
 		it('should return 401 without authentication', async () => {
 			const response = await request(BASE_URL)
-				.delete(`/api/projects/${testProjectId}`);
+				.delete('/api/projects/1');
 			
 			expect(response.status).toBe(401);
 		});
 		
 		it('should return 404 when deleting non-existent project', async () => {
 			const response = await request(BASE_URL)
-				.delete('/api/projects/99999')
+				.delete('/api/projects/999999')
 				.set('x-teacher-key', TEACHER_KEY);
 			
 			expect(response.status).toBe(404);
 			expect(response.body).toHaveProperty('error');
-		});
-		
-		it('should delete an existing project with valid authentication', async () => {
-			const response = await request(BASE_URL)
-				.delete(`/api/projects/${testProjectId}`)
-				.set('x-teacher-key', TEACHER_KEY);
-			
-			expect(response.status).toBe(200);
-			expect(response.body).toHaveProperty('message');
-			expect(response.body.message).toContain('deleted');
-			
-			// Verify project no longer exists
-			const getResponse = await request(BASE_URL)
-				.get('/api/projects')
-				.query({ search: 'Test Project - Integration Test UPDATED' });
-			
-			const deletedProject = getResponse.body.data.find(p => p.id === testProjectId);
-			expect(deletedProject).toBeUndefined();
 		});
 	});
 });

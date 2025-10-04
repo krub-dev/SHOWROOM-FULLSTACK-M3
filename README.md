@@ -523,18 +523,20 @@ newman run Showroom_API.postman_collection.json
 
 ### **Integration Tests (Jest + Supertest)**
 
-The project includes automated integration tests that validate all CRUD operations against a real API server and PostgreSQL database.
+The project includes comprehensive automated integration tests that validate all CRUD operations against a real API server and PostgreSQL database.
 
 **Test Suite Coverage:**
 
 -   ✅ Health check endpoint validation
--   ✅ GET all projects with pagination (11 passing tests)
+-   ✅ GET all projects with pagination
 -   ✅ Search functionality
 -   ✅ Featured projects filter
+-   ✅ **CREATE** - Project creation with full validation
+-   ✅ **UPDATE** - Project updates with authentication
+-   ✅ **DELETE** - Project deletion with cleanup
 -   ✅ Authentication validation (401 errors)
 -   ✅ Input validation (400 errors)
 -   ✅ Not found errors (404 errors)
--   ⚠️ Create/Update/Delete operations (require sequence reset in test environment)
 
 **Running integration tests:**
 
@@ -558,14 +560,23 @@ npm test
 **Test Results:**
 
 ```
-✅ 11/14 tests passing (79% coverage)
+✅ 14/14 tests passing (100% coverage)
+   Test Suites: 1 passed, 1 total
+   Tests:       14 passed, 14 total
+   
+   - Health check ✓
    - All GET operations ✓
+   - CREATE → UPDATE → DELETE lifecycle ✓
    - Authentication validation ✓
    - Error handling ✓
    - Input validation ✓
 ```
 
-**Note:** The integration tests run against a real PostgreSQL database. The POST/PUT/DELETE tests currently encounter ID sequence issues in the test environment, but all core CRUD operations work correctly in development and production environments.
+**Technical Implementation:**
+- Tests organized in logical execution order (CREATE → UPDATE → DELETE)
+- Automatic PostgreSQL sequence reset before tests to prevent ID conflicts
+- Complete cleanup after test execution
+- Real database integration (not mocked) for production-like testing
 
 ---
 
