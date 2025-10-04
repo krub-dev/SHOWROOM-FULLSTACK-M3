@@ -64,7 +64,7 @@ It features a full CRUD system, project search/filter by title and technologies,
 │   │   │   ├── Home.vue                    # Landing page with responsive design
 │   │   │   ├── ProjectList.vue             # Projects list with search, pagination, skeleton loader
 │   │   │   ├── ApiProjects.vue             # CRUD Manager with health check
-│   │   │   ├── Contact.vue                 # Dark theme contact form
+│   │   │   ├── Contact.vue                 # Dark theme contact form with toast notifications
 │   │   │   ├── NotFound404.vue             # 404 error page with animations
 │   │   │   ├── LinkedInButton.vue          # Professional networking button
 │   │   │   └── SkeletonLoader.vue          # Loading skeleton with shimmer effect
@@ -81,22 +81,23 @@ It features a full CRUD system, project search/filter by title and technologies,
 │   │   └── krub-logo.png                   # Public assets
 │   ├── index.html                          # HTML entry point
 │   ├── vite.config.js                      # Vite config with /api proxy
-│   └── package.json                        # Frontend dependencies
+│   ├── package.json                        # Frontend dependencies (showroom-fullstack v1.0.0)
+│   └── package-lock.json                   # Lock file for reproducible builds
 ├── 🌐 Backend (Express API)                → http://localhost:3001 | Production: Railway
-│   ├── prisma/
-│   │   ├── schema.prisma                   # Database schema (Project model)
-│   │   ├── seed.js                         # Database seeding with 10 projects
-│   │   └── migrations/                     # Migration history (auto-generated)
-│   ├── tests/
-│   │   ├── server.test.js                  # Integration tests (Jest + Supertest)
-│   │   └── run-tests.sh                    # Automated test runner script
-│   ├── scripts/
-│   │   └── (utility scripts)               # Helper scripts
-│   ├── server.js                           # Express server with CRUD + SPA routing
-│   ├── .env                                # Local environment variables (gitignored)
-│   ├── .env.example                        # Environment template
-│   └── package.json                        # Backend dependencies
-├── Showroom_API.postman_collection.json    # Postman collection with 8 endpoints + tests
+│   ├── api-projects/
+│   │   ├── prisma/
+│   │   │   ├── schema.prisma               # Database schema (Project model)
+│   │   │   ├── seed.js                     # Database seeding with 10 projects
+│   │   │   └── migrations/                 # Migration history (auto-generated)
+│   │   ├── tests/
+│   │   │   ├── server.test.js              # Integration tests (Jest + Supertest) - 17 tests
+│   │   │   └── run-tests.sh                # Automated test runner script
+│   │   ├── server.js                       # Express server with CRUD + SPA routing
+│   │   ├── .env                            # Local environment variables (gitignored)
+│   │   ├── .env.example                    # Environment template with secure defaults
+│   │   ├── package.json                    # Backend dependencies (showroom-api v1.0.0)
+│   │   └── package-lock.json               # Lock file for reproducible builds
+├── Showroom_API.postman_collection.json    # Postman collection with 9 endpoints + tests
 ├── README.md                               # This file
 └── .gitignore                              # Git ignore rules
 ```

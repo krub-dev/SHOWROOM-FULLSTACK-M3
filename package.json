@@ -1,7 +1,7 @@
 {
-	"name": "ih-m3-w2-d1-vue",
+	"name": "showroom-fullstack",
 	"private": true,
-	"version": "0.0.0",
+	"version": "1.0.0",
 	"type": "module",
 	"scripts": {
 		"dev": "vite",

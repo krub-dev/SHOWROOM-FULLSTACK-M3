@@ -45,7 +45,6 @@ temp/
 # Backend API (Express)
 api-projects/node_modules/
 api-projects/.env
-api-projects/package-lock.json
 
 # Database files
 *.db
