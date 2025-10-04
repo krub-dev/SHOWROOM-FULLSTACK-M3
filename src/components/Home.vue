@@ -64,7 +64,6 @@ import LinkedInButton from "./LinkedInButton.vue";
 }
 
 .banner {
-	height: 15em;
 	will-change: filter;
 	transition: filter 300ms;
 	filter: drop-shadow(0 1em 2em #1e1e1eaa);

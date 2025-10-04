@@ -99,7 +99,9 @@
 				<div class="toast-icon">✓</div>
 				<div class="toast-content">
 					<div class="toast-title">Message Sent Successfully!</div>
-					<div class="toast-message">Thanks for reaching out! I'll get back to you soon.</div>
+					<div class="toast-message">
+						Thanks for reaching out! I'll get back to you soon.
+					</div>
 				</div>
 			</div>
 		</Transition>
