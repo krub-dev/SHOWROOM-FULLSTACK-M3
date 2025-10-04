@@ -1,6 +1,7 @@
-# 🚀 SHOWROOM - Projects Portfolio
 
-Professional full-stack web application developed during **Ironhack Web Development Course**. This project showcases a complete Vue.js frontend with Express.js backend, featuring advanced CRUD operations, featured projects system, and elegant dark UI design.
+![Showroom banner](src/assets/banner-showroom.png)
+
+Professional full-stack web application developed during Ironhack Web Development Course. This project showcases a complete Vue.js frontend with an Express.js backend, featuring advanced CRUD operations, a featured projects system, and an modern dark UI design. The application is deployed on Railway with a PostgreSQL database, ensuring reliable cloud hosting and scalable data management.
 
 ## 🌐 **Live SHOWROOM**
 
