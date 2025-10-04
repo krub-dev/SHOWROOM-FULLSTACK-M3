@@ -93,10 +93,16 @@
 			<LinkedInButton />
 		</div>
 
-		<div v-if="showSuccess" class="success-message">
-			<h3>🎉 Message Sent Successfully!</h3>
-			<p>Thanks for reaching out! I'll get back to you soon.</p>
-		</div>
+		<!-- Toast Notification (Admin Panel Style) -->
+		<Transition name="toast">
+			<div v-if="showSuccess" class="toast-notification success">
+				<div class="toast-icon">✓</div>
+				<div class="toast-content">
+					<div class="toast-title">Message Sent Successfully!</div>
+					<div class="toast-message">Thanks for reaching out! I'll get back to you soon.</div>
+				</div>
+			</div>
+		</Transition>
 	</div>
 </template>
 
@@ -358,40 +364,83 @@ export default {
 	transform: translateY(-2px);
 }
 
-.success-message {
-	margin-top: 1.5rem;
-	padding: 1.5rem;
-	background: linear-gradient(
-		45deg,
-		rgba(245, 202, 28, 0.1),
-		rgba(245, 202, 28, 0.05)
-	);
-	border: 2px solid rgba(245, 202, 28, 0.3);
-	border-radius: 12px;
-	text-align: center;
-	animation: slideInUp 0.5s ease;
+/* Toast Notification (Admin Panel Style) */
+.toast-notification {
+	position: fixed;
+	top: 20px;
+	right: 20px;
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+	padding: 1rem 1.5rem;
+	border-radius: 8px;
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+	z-index: 9999;
+	min-width: 320px;
+	max-width: 400px;
 }
 
-.success-message h3 {
-	color: #1e1e1e;
+.toast-notification.success {
+	background: #27ae60;
+	color: white;
+}
+
+.toast-icon {
 	font-size: 1.5rem;
-	margin-bottom: 0.5rem;
+	font-weight: bold;
+	background: rgba(255, 255, 255, 0.2);
+	width: 40px;
+	height: 40px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 50%;
+	flex-shrink: 0;
 }
 
-.success-message p {
-	color: #666;
+.toast-content {
+	flex: 1;
+}
+
+.toast-title {
+	font-weight: bold;
 	font-size: 1rem;
-	margin: 0;
+	margin-bottom: 0.25rem;
 }
 
-@keyframes slideInUp {
+.toast-message {
+	font-size: 0.875rem;
+	opacity: 0.9;
+}
+
+/* Toast Transition Animations */
+.toast-enter-active {
+	animation: slideInRight 0.3s ease;
+}
+
+.toast-leave-active {
+	animation: slideOutRight 0.3s ease;
+}
+
+@keyframes slideInRight {
 	from {
+		transform: translateX(400px);
 		opacity: 0;
-		transform: translateY(30px);
 	}
 	to {
+		transform: translateX(0);
 		opacity: 1;
-		transform: translateY(0);
+	}
+}
+
+@keyframes slideOutRight {
+	from {
+		transform: translateX(0);
+		opacity: 1;
+	}
+	to {
+		transform: translateX(400px);
+		opacity: 0;
 	}
 }
 
@@ -421,6 +470,15 @@ export default {
 
 	.linkedin-section {
 		text-align: center;
+	}
+
+	/* Toast responsive */
+	.toast-notification {
+		top: 10px;
+		right: 10px;
+		left: 10px;
+		min-width: auto;
+		max-width: none;
 	}
 }
 
