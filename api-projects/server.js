@@ -198,6 +198,31 @@ app.get("/api/projects", async (req, res) => {
 	}
 });
 
+// GET /api/projects/:id - Get single project by ID
+app.get("/api/projects/:id", async (req, res) => {
+	try {
+		const id = parseInt(req.params.id);
+
+		// Validate ID is a valid number
+		if (isNaN(id)) {
+			return res.status(400).json({ error: "Invalid project ID" });
+		}
+
+		const project = await prisma.project.findUnique({
+			where: { id },
+		});
+
+		if (!project) {
+			return res.status(404).json({ error: "Project not found" });
+		}
+
+		res.json(project);
+	} catch (error) {
+		console.error("Error fetching project:", error);
+		res.status(500).json({ error: "Failed to fetch project" });
+	}
+});
+
 // POST /api/projects - Crear nuevo (como @PostMapping con Prisma)
 app.post("/api/projects", async (req, res) => {
 	try {

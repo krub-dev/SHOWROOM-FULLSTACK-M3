@@ -365,10 +365,11 @@ curl https://showroom-fullstack-m3-production.up.railway.app/api/projects
 | Method | Endpoint                                | Description                   | Auth Required | Notes                       |
 | ------ | --------------------------------------- | ----------------------------- | ------------- | --------------------------- |
 | GET    | `/api/projects`                         | Get all projects              | No            | Supports search, pagination |
+| GET    | `/api/projects/:id`                     | Get single project by ID      | No            | Returns 404 if not found    |
 | GET    | `/api/projects?search=&page=&pageSize=` | List with search & pagination | No            | Filters by title/tags       |
-| POST   | `/api/projects`                         | Create new project            | Yes           | x-admin-key header        |
-| PUT    | `/api/projects/:id`                     | Update project                | Yes           | x-admin-key header        |
-| DELETE | `/api/projects/:id`                     | Delete project                | Yes           | x-admin-key header        |
+| POST   | `/api/projects`                         | Create new project            | Yes           | x-admin-key header          |
+| PUT    | `/api/projects/:id`                     | Update project                | Yes           | x-admin-key header          |
+| DELETE | `/api/projects/:id`                     | Delete project                | Yes           | x-admin-key header          |
 | GET    | `/api/health`                           | Health check                  | No            | DB/API connection test      |
 
 **Request Body Schema (POST/PUT):**
@@ -407,6 +408,34 @@ curl https://showroom-fullstack-m3-production.up.railway.app/api/projects
 ```bash
 x-admin-key: <your-admin-password>
 ```
+
+**Example: Get Single Project**
+
+```bash
+curl http://localhost:3000/api/projects/1
+```
+
+**Response (200 OK):**
+
+```json
+{
+	"id": 1,
+	"title": "E-commerce Platform",
+	"description": "Full-stack e-commerce solution",
+	"image": "https://...",
+	"technologies": ["React", "Node.js", "PostgreSQL"],
+	"featured": true,
+	"githubUrl": "https://github.com/...",
+	"liveUrl": "https://...",
+	"createdAt": "2025-10-03T10:00:00.000Z",
+	"updatedAt": "2025-10-03T10:00:00.000Z"
+}
+```
+
+**Error Responses:**
+
+-   `404 Not Found`: Project with specified ID doesn't exist
+-   `400 Bad Request`: Invalid ID format (not a number)
 
 ## 🔍 **Features**
 
@@ -447,7 +476,7 @@ The application implements comprehensive error handling as required, with **clea
 | Status  | Scenario              | User Message                                                            | Recovery Action                            |
 | ------- | --------------------- | ----------------------------------------------------------------------- | ------------------------------------------ |
 | **400** | Invalid request data  | "Invalid data. Please check all required fields."                       | Form preserved, user can correct and retry |
-| **401** | Authentication failed | "Authentication failed. Please verify your admin access code."        | User can re-enter correct password         |
+| **401** | Authentication failed | "Authentication failed. Please verify your admin access code."          | User can re-enter correct password         |
 | **404** | Resource not found    | "Not found. Server may be unavailable / Project may have been deleted." | Retry button available                     |
 | **500** | Server error          | "Server error. Please try again in a few moments."                      | Retry button available                     |
 

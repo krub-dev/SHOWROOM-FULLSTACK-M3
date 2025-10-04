@@ -113,6 +113,53 @@
 			"response": []
 		},
 		{
+			"name": "Get Single Project by ID",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Response has project data\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('id');",
+							"    pm.expect(jsonData).to.have.property('title');",
+							"    pm.expect(jsonData).to.have.property('description');",
+							"    pm.expect(jsonData).to.have.property('technologies');",
+							"});",
+							"",
+							"pm.test(\"Technologies is an array\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.technologies).to.be.an('array');",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/projects/:id",
+					"host": ["{{base_url}}"],
+					"path": ["api", "projects", ":id"],
+					"variable": [
+						{
+							"key": "id",
+							"value": "1",
+							"description": "Project ID"
+						}
+					]
+				},
+				"description": "Get a single project by its ID. Returns the complete project object including all fields.\n\n**Path Parameter:**\n- `id`: The numeric ID of the project\n\n**Responses:**\n- `200 OK`: Project found and returned\n- `404 Not Found`: Project with specified ID doesn't exist\n- `400 Bad Request`: Invalid ID format (not a number)"
+			},
+			"response": []
+		},
+		{
 			"name": "Search Projects by Technology",
 			"event": [
 				{
