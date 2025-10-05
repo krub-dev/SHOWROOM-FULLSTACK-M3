@@ -675,28 +675,6 @@ _Optional advanced implementations to showcase technical expertise:_
 
 ---
 
-## 📦 **Deliverables**
-
--   Public repo with code (frontend + backend)
--   Clear start instructions, `.env.example`
--   Seed script for demo data
--   Test collection/instructions
--   Screenshots or GIF of list/create/search
--   (Optional) URLs for live frontend and backend
-
----
-
-## 💬 **Tips for development**
-
--   Start with `/api/health` and frontend connection
--   Seed data early for real testing
--   Handle API errors from the beginning
--   Update README as you build
--   Keep UI simple (list + form)
--   Your project is your personal showroom of Projects!
-
----
-
 ## 🎨 **Features**
 
 ### **Frontend Features:**
