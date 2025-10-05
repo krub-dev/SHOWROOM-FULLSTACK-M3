@@ -685,7 +685,7 @@ SEO:              83/100  ✅
 
 ---
 
-## 💡 **Advanced Feature**: Advanced Sorting and Filtering (Interview-Level Demonstration)
+## 💡 **Advanced Feature**: Advanced Sorting and Filtering (Interview-Level Demo)
 
 **Implemented in this project:**  
 SHOWROOM provides robust search and filtering capabilities both in the UI and the backend API. Users can:
@@ -715,14 +715,15 @@ SHOWROOM provides robust search and filtering capabilities both in the UI and th
 - Efficient navigation, even with a large number of projects.
 
 ---
+▶️ **Presentation Slides**: [Link](https://gamma.app/docs/SHOWROOM-1yy8evvbcidh7iu?mode=doc)
 
+---
 ## 👤 **Developer**
 
 -   **GitHub:** [@krub-dev](https://github.com/krub-dev)
 -   **LinkedIn:** [Kiko Rubio Illán](https://linkedin.com/in/krub)
 -   **Portfolio:** [krub.dev](https://krub.dev)
 -   **Live Demo:** [krubSHOWROOM](https://krubshowroom-production.up.railway.app)
-
 ---
 
 **Ironhack Web Development Bootcamp** - Module 3 Final Project  
