@@ -27,6 +27,10 @@ The showroom includes:
 SHOWROOM is a portfolio-style web app to manage and display your best projects.  
 It features a full CRUD system, project search/filter by title and technologies, and real-time admin controls.
 
+![Showroom Project Desktop](src/assets/Pages/SHOWROOM-PROJECT-DESKTOP.png)
+
+![Showroom Project Responsive](src/assets/Pages/SHOWROOM-PROJECT-RESPONSIVE.png)
+
 ### **Key Features**
 
 -   Full stack (Vue.js + Express.js)
