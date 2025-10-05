@@ -439,35 +439,55 @@ curl http://localhost:3000/api/projects/1
 -   `404 Not Found`: Project with specified ID doesn't exist
 -   `400 Bad Request`: Invalid ID format (not a number)
 
-## 🔍 **Features**
-
-### Frontend
-
--   SPA Routing (Vue Router)
--   Featured/all projects toggle
--   CRUD admin interface
--   Search by title/technologies (tags clickable/filterable)
--   Pagination controls (next/prev, page size)
--   **Error/loading/success states** with skeleton loaders
--   **Robust error handling** (see Error Handling section below)
--   Dark theme, responsive, animations with `prefers-reduced-motion`
--   Button to test backend/db connection (`/api/health`)
--   Professional contact form
--   **Accessibility features**: ARIA labels, focus-visible, WCAG 2.0 AA contrast
-
-### Backend
-
--   RESTful API (Express.js with PostgreSQL + Prisma ORM)
--   Database persistence with migrations and seeding
--   Featured projects system
--   API Key Authentication (admin key for write operations)
--   **Comprehensive error handling** with specific HTTP status codes
--   Input validation (title required, rating 1-5, etc.)
--   Health check endpoint (`/api/health`)
--   Search with case-insensitive PostgreSQL queries
--   Server-side pagination with metadata
-
 ---
+
+## 🎨 **Features**
+
+### 🚀 Frontend
+
+-   **SPA Routing:** Navigation with Vue Router, routes `/`, `/projects`, `/contact`, `/crud`, and 404 fallback.
+-   **Featured Projects System:** Dynamic toggle between featured and all projects.
+-   **CRUD Admin Panel:** Admin interface with API Key authentication, complete panel to create, edit, and delete projects.
+-   **Search & Filter:** Search by title and technologies, tag-based filters (clickable), pagination with next/prev controls and page size options.
+-   **Responsive & Mobile-First:** Adaptive design, hamburger menu (44x44px), optimized for mobile, tablet, and desktop.
+-   **Dark Theme UI:** Consistent golden/dark palette (`#f5ca1c`), smooth animations, and support for `prefers-reduced-motion`.
+-   **Component Architecture:** Reusable components with Composition API, modular architecture.
+-   **Form Handling:** Advanced forms with validation, professional contact form with LinkedIn integration.
+-   **Error/Loading States:** Skeleton loader with shimmer effect, robust error handling, and success/loading states.
+-   **Accessibility (a11y):** WCAG 2.0 AA, ARIA labels, `:focus-visible`, high contrast, keyboard navigation, alt text on images.
+-   **Professional Styling:** Hover effects, modern transitions, consistent design.
+-   **Health Check Button:** Button to test backend/database connection (`/api/health`).
+-   **Notifications:** Color-coded visual feedback for CRUD actions.
+-   **LinkedIn Integration:** Professional button for networking.
+
+### 🛠️ Backend
+
+-   **RESTful API:** Standard endpoints with Express.js, PostgreSQL, and Prisma ORM.
+-   **Database Persistence:** Migrations, automatic seeding with 10 projects, ACID support, and visual management via Prisma Studio.
+-   **Featured Projects:** Backend support for featured project categorization.
+-   **API Key Authentication:** All write operations protected by API Key (`x-admin-key`).
+-   **Error Handling:** Comprehensive error handling with specific HTTP codes and clear messages; logging in development and production.
+-   **Input/Data Validation:** Strict validations (required title, rating 1-5, correct types).
+-   **Health Check Endpoint:** `/api/health` reports API and database connection status.
+-   **Search & Pagination:** Case-insensitive search in PostgreSQL, server-side pagination with metadata.
+-   **CORS Production-Ready:** Secure configuration for Railway deployment.
+-   **Static/SPARouting Support:** Express server with fallback for SPA routes.
+-   **Express Middleware:** Static file serving, JSON parsing, request validation.
+-   **Auto-incremental IDs:** Primary keys managed by the database.
+-   **CI/CD Pipeline:** Automatic deployment on each push to `main` via Railway, Prisma migrations executed in production.
+-   **Graceful Shutdown:** Clean Prisma client disconnection when stopping the server.
+-   **Independent Environments:** Complete separation between local and production databases.
+
+### 💡 Advanced Features
+
+-   **Dynamic Project Filtering:** Real-time filtering by tags, project's name and featured projects.
+-   **Admin Dashboard:** Full project management with a dropdown interface.
+-   **Color-coded Notifications:** Visual feedback by operation type (success/error/info).
+-   **Enhanced Accessibility:** Advanced focus management, aria-live regions, Lighthouse optimization ≥95.
+-   **Real-time Updates:** Instant UI refresh after API operations.
+-   **Mobile Optimization:** Touch-friendly interface, optimal spacing, smooth mobile experience.
+-   **Homogeneous Design:** Consistent style and UX across all components.
+-   **Graceful Degradation:** Elegant fallback if backend is unavailable (clear messages and retry option).
 
 ## 🛡️ **Error Handling**
 
@@ -612,12 +632,13 @@ npm test
 **Test Results:**
 
 ```
-✅ 14/14 tests passing (100% coverage)
+✅ 17/17 tests passing (100% coverage)
    Test Suites: 1 passed, 1 total
-   Tests:       14 passed, 14 total
+   Tests:       17 passed, 17 total
 
    - Health check ✓
    - All GET operations ✓
+   - GET by ID ✓
    - CREATE → UPDATE → DELETE lifecycle ✓
    - Authentication validation ✓
    - Error handling ✓
@@ -664,63 +685,34 @@ SEO:              83/100  ✅
 
 ---
 
-## 💡 **Advanced Features (Interview-Level Demonstration)**
+## 💡 **Advanced Feature**: Advanced Sorting and Filtering (Interview-Level Demonstration)
 
-_Optional advanced implementations to showcase technical expertise:_
+**Implemented in this project:**  
+SHOWROOM provides robust search and filtering capabilities both in the UI and the backend API. Users can:
+- Search projects by title and technologies (tags).
+- Toggle between featured projects and all projects.
+- Navigate through paginated results using next/prev controls.
 
--   **Login + Protected Routes:** Implement authentication with JWT, user profile & logout functionality.
--   **Optimistic UI + Retry Logic:** UI updates before server response, with rollback & exponential retry on error.
--   **Advanced Sorting & Filtering:** Sort by createdAt/title/rating, filter by multiple tags simultaneously.
--   **Enhanced Accessibility:** Focus management, aria-live regions, Lighthouse audit optimization (≥95 score).
+**Tech stack:**  
+- Vue.js with the Composition API for reactive UI.
+- Fetch API for HTTP requests with dynamic parameters.
+- Express.js and Prisma ORM for efficient, case-insensitive, and paginated searches in PostgreSQL.
 
----
+**Workflow:**
+1. The user enters a search term or selects technologies/tags.
+2. The UI collects these parameters and sends them to the backend:  
+   `GET /api/projects?search=vue&page=1&pageSize=6&tags=Node.js,Vue.js`
+3. The backend processes the filters and returns only the projects that match the criteria, along with pagination metadata.
+4. The frontend instantly displays the filtered projects, with visual indicators for active filters and pagination.
 
-## 🎨 **Features**
+**Test coverage:**  
+- Integration tests verify searching, filtering, and pagination in the backend.
+- Frontend tests confirm correct filtering and pagination in the UI.
 
-### **Frontend Features:**
-
--   ✅ **SPA Routing** - Vue Router navigation with smooth transitions and SPA fallback
--   ✅ **Featured Projects System** - Toggle between featured/all projects view
--   ✅ **CRUD API Manager** - Complete admin interface with production API URLs
--   ✅ **Mobile-First Responsive** - Hamburger menu (44x44px touch targets), mobile accordion
--   ✅ **Dark Theme UI** - Consistent golden/dark color scheme (#f5ca1c)
--   ✅ **Component Architecture** - Reusable Vue components with Composition API
--   ✅ **Professional Styling** - Hover effects, smooth transitions, modern design
--   ✅ **Form Handling** - Advanced forms with validation and custom styling
--   ✅ **LinkedIn Integration** - Professional networking button
--   ✅ **Cross-Device UX** - Optimized for desktop, tablet, and mobile experiences
-
-### **Backend Features:**
-
--   ✅ **RESTful API** - Standard HTTP methods with proper status codes
--   ✅ **Production CORS** - Cross-origin requests configured for Railway deployment
--   ✅ **PostgreSQL Database** - Robust, production-grade database with ACID compliance
--   ✅ **Prisma ORM** - Type-safe database client with migrations and seeding
--   ✅ **SPA Routing Support** - Express middleware for Vue Router fallback
--   ✅ **Error Handling** - Comprehensive error responses and logging
--   ✅ **Featured Projects** - Backend support for featured/regular categorization
--   ✅ **Express Middleware** - Static file serving, JSON parsing, request validation
--   ✅ **Auto-incremental IDs** - Database-managed primary keys
--   ✅ **Railway Integration** - Production-ready deployment with managed PostgreSQL
--   ✅ **CI/CD Pipeline** - Automatic deployment on every push to main branch via Railway
--   ✅ **Database Seeding** - Pre-populated with 10 sample projects
--   ✅ **Prisma Studio** - Visual database management tool
--   ✅ **API Key Authentication** - All write operations protected by API key (x-admin-key header)
--   ✅ **Health Check Endpoint** - `/api/health` returns database connection status
--   ✅ **Data Validation** - Title required on POST/PUT; schema-level constraints
--   ✅ **Graceful Shutdown** - Proper Prisma client disconnection on server stop
--   ✅ **Independent Environments** - Local and production databases are completely separate
--   ✅ **Search & Pagination** - Case-insensitive PostgreSQL queries with server-side pagination (6 items per page)
--   ✅ **Skeleton Loader** - Shimmer loading effect during data fetching for improved UX
-
-### **Advanced Features:**
-
--   🌟 **Dynamic Project Filtering** - Real-time toggle between featured and all projects
--   🔧 **Admin Dashboard** - Complete project management with dropdown interface
--   📊 **Color-coded Notifications** - Visual feedback for CRUD operations
--   🎨 **Homogeneous Design** - Consistent styling across all components
--   ⚡ **Real-time Updates** - Instant UI updates after API operations
--   📱 **Mobile Optimization** - Touch-friendly interface with proper spacing
+**User benefits:**  
+- Find relevant projects quickly and with precision.
+- Professional experience with flexible search and multi-tag filtering.
+- Efficient navigation, even with a large number of projects.
 
 ---
 
